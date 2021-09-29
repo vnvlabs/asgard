@@ -1,10 +1,13 @@
-# ASGarD - Adaptive Sparse Grid Discretization
 
-
-## VnV Support
+# VnV Support
 
 This version can interface with the VnV toolkit to enable automatic report generation. To enable this, compile with `-DASGARD_USE_VNV=ON`
 Please ensure that the VnV Injection library is in a location where CMake can find it. This implementation is for demo purposes only. 
+
+
+# ASGarD - Adaptive Sparse Grid Discretization
+
+
 
 To cite the ASGarD code in your work, please use: (TODO)
 
