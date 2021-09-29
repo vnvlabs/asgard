@@ -31,11 +31,30 @@ using prec = double;
 using prec = float;
 #endif
 
+#ifdef ASGARD_USE_VNV
+#include "VnV.h"
+INJECTION_EXECUTABLE(ASGARD)
+INJECTION_SUBPACKAGE(ASGARD, ASGARD_time_advance)
+INJECTION_SUBPACKAGE(ASGARD, ASGARD_pde)
+INJECTION_SUBPACKAGE(ASGARD, ASGARD_tools)
+#else
+// @VNV_TODO need to provide a stub include file for cases like this. This avoids the need 
+// for putting #ifdef ASGARD_WITH_VNV around every vnv call. 
+#define INJECTION_INITIALIZE(...) 
+#define INJECTION_FINALIZE(...)
+#define INJECTION_LOOP_BEGIN(...)
+#define INJECTION_LOOP_END(...)
+#define INJECTION_LOOP_ITER(...)
+#endif	
+
 int main(int argc, char **argv)
 {
   // -- set up distribution
   auto const [my_rank, num_ranks] = initialize_distribution();
-
+  
+  //Initailize VnV
+  INJECTION_INITIALIZE(ASGARD, &argc, &argv, "./vv-input.json");
+  
   // -- parse cli
   parser const cli_input(argc, argv);
   if (!cli_input.is_valid())
@@ -48,6 +67,7 @@ int main(int argc, char **argv)
   // kill off unused processes
   if (my_rank >= num_ranks)
   {
+    INJECTION_FINALIZE(ASGARD)
     finalize_distribution();
     return 0;
   }
@@ -201,8 +221,13 @@ int main(int argc, char **argv)
 
   fk::vector<prec> f_val(initial_condition);
   node_out() << "--- begin time loop w/ dt " << pde->get_dt() << " ---\n";
+  
+  INJECTION_LOOP_BEGIN("ASGARD", VASGARD, "TimeStep", pde);
+  
   for (auto i = 0; i < opts.num_time_steps; ++i)
   {
+    INJECTION_LOOP_ITER("ASGARD","TimeStep","Start");
+    
     // take a time advance step
     auto const time          = (i + 1) * pde->get_dt();
     auto const update_system = i == 0;
@@ -211,13 +236,19 @@ int main(int argc, char **argv)
     auto const time_str = opts.use_implicit_stepping ? "implicit_time_advance"
                                                      : "explicit_time_advance";
     auto const time_id = tools::timer.start(time_str);
+    
+    
     auto const sol     = time_advance::adaptive_advance(
         method, *pde, adaptive_grid, transformer, opts, f_val, time,
         default_workspace_MB, update_system);
     f_val.resize(sol.size()) = sol;
+    
+    INJECTION_LOOP_ITER("ASGARD", "TimeStep", "Advanced");
+
     tools::timer.stop(time_id);
 
     // print root mean squared error from analytic solution
+    // @BEN Make this a VnV Test 
     if (pde->has_analytic_soln)
     {
       // get analytic solution at time(step+1)
@@ -309,9 +340,11 @@ int main(int argc, char **argv)
     }
 #endif
 
+    INJECTION_LOOP_ITER("ASGARD","TimeStep","End Step");
     node_out() << "timestep: " << i << " complete" << '\n';
   }
-
+  INJECTION_LOOP_END("ASGARD","TimeStep");
+  
   node_out() << "--- simulation complete ---" << '\n';
 
   auto const segment_size = element_segment_size(*pde);
@@ -323,6 +356,7 @@ int main(int argc, char **argv)
 
   node_out() << tools::timer.report() << '\n';
 
+  INJECTION_FINALIZE(ASGARD)
   finalize_distribution();
 
   return 0;

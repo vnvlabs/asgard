@@ -1,5 +1,11 @@
 # ASGarD - Adaptive Sparse Grid Discretization
 
+
+## VnV Support
+
+This version can interface with the VnV toolkit to enable automatic report generation. To enable this, compile with `-DASGARD_USE_VNV=ON`
+Please ensure that the VnV Injection library is in a location where CMake can find it. This implementation is for demo purposes only. 
+
 To cite the ASGarD code in your work, please use: (TODO)
 
 The ASGarD project has the goal of building an solver specifically targeting
@@ -71,6 +77,7 @@ To see a list of available PDEs, run `./asgard --available_pdes`. The listed PDE
 To see the list of all runtime options, run `./asgard --help`.
 
 For specific platform build instructions, [see this wiki page.](https://github.com/project-asgard/asgard/wiki/platforms)
+
 
 ## MATLAB Interface 
 

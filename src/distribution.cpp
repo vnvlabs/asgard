@@ -19,10 +19,20 @@ struct distribution_handler
   }
   MPI_Comm get_global_comm() const { return global_comm; }
 
+  MPI_Comm& get_global_comm_ref() const { return global_comm; } 
 private:
   MPI_Comm global_comm = MPI_COMM_WORLD;
 };
 static distribution_handler distro_handle;
+#endif
+
+#ifdef ASGARD_USE_VNV
+#ifdef ASGARD_USE_MPI
+MPI_Comm& get_comm(){
+	static const MPI_Comm comm = distro_handlee.get_global_comm();
+	return comm;
+}
+#endif
 #endif
 
 int get_local_rank()

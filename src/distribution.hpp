@@ -13,6 +13,7 @@
 #include <map>
 #include <vector>
 
+
 // simple struct for representing a range within the element grid
 struct grid_limits
 {
@@ -159,6 +160,17 @@ int get_local_rank();
 int get_rank();
 // get number of ranks overall
 int get_num_ranks();
+
+#ifdef ASGARD_USE_VNV
+#ifdef ASGARD_USE_MPI
+
+#define VASGARD VCUST("mpi",get_comm())
+MPI_Comm& get_comm();
+#else 
+#define VASGARD VSELF
+#endif
+#endif
+
 
 // this struct will use node-local ranks to ensure only
 // one rank prints some input val:

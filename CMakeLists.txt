@@ -4,6 +4,7 @@ project (asgard
   VERSION 0.3.0
   LANGUAGES CXX
 )
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 #-------------------------------------------------------------------------------
 #  Setup the kromult external project.
@@ -81,6 +82,8 @@ option (ASGARD_IO_HIGHFIVE "Use the HighFive HDF5 header library for I/O" OFF)
 option (ASGARD_USE_CUDA "Optional CUDA support for asgard" OFF)
 option (ASGARD_USE_OPENMP "Optional openMP support for asgard" ON)
 option (ASGARD_USE_MPI "Optional distributed computing support for asgard" OFF)
+option (ASGARD_USE_VNV "Option to use VnV within ASGARD" OFF)
+
 include(CMakeDependentOption)
 cmake_dependent_option(ASGARD_USE_SCALAPACK "Use optional scalapack linear algebra library" OFF "ASGARD_USE_MPI" OFF)
 option (ASGARD_USE_MATLAB "Optional MATLAB plotting support for asgard" OFF)
@@ -176,6 +179,11 @@ endif()
 if(ASGARD_USE_MPI)
   find_package(MPI REQUIRED)
   include_directories(${MPI_CXX_INCLUDE_DIRS})
+endif()
+
+if (ASGARD_USE_VNV)
+   find_package(Injection REQUIRED)
+
 endif()
 
 if(ASGARD_USE_MATLAB)
@@ -391,6 +399,19 @@ configure_file(
 target_include_directories (asgard PRIVATE ${CMAKE_BINARY_DIR})
 
 target_include_directories (kronmult_cuda PRIVATE ${CMAKE_BINARY_DIR})
+
+if (ASGARD_USE_VNV) 
+  foreach(package ${main_app_link_deps})
+          message(LINKING VNV PACKAGE ASGARD_${package})
+	  link_vnv_file(${package} ASGARD_${package} cpp)
+  endforeach()
+  link_vnv_file(asgard ASGARD cpp)
+  configure_file(
+  src/vv-input.json
+  ${CMAKE_BINARY_DIR}/vv-input.json
+)
+
+endif()	
 
 ###############################################################################
 ## Testing asgard
