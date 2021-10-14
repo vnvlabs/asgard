@@ -374,12 +374,28 @@ if (ASGARD_IO_HIGHFIVE)
   list (APPEND main_app_link_deps io)
 endif()
 
-if (ASGARD_USE_MPI)
-  list (APPEND main_app_link_deps PRIVATE MPI::MPI_CXX)
-endif()
 
 if (ASGARD_USE_MATLAB)
   list (APPEND main_app_link_deps matlab_plot)
+endif()
+
+#This should happen after all deps are added, but before 
+#the MPI dep is added. The PRIVATE in the deps breaks this
+#because its not a target. Before PULL we should add some sort
+#of subvariable.
+if (ASGARD_USE_VNV) 
+  foreach(package ${main_app_link_deps})
+	link_vnv_file(${package} ASGARD_${package} cpp)
+  endforeach()
+  link_vnv_file(asgard ASGARD cpp)
+  configure_file(
+  src/vv-input.json
+  ${CMAKE_BINARY_DIR}/vv-input.json
+)
+endif()	
+
+if (ASGARD_USE_MPI)
+	list (APPEND main_app_link_deps PRIVATE MPI::MPI_CXX)
 endif()
 
 target_link_libraries (asgard PRIVATE ${main_app_link_deps})
@@ -400,18 +416,6 @@ target_include_directories (asgard PRIVATE ${CMAKE_BINARY_DIR})
 
 target_include_directories (kronmult_cuda PRIVATE ${CMAKE_BINARY_DIR})
 
-if (ASGARD_USE_VNV) 
-  foreach(package ${main_app_link_deps})
-          message(LINKING VNV PACKAGE ASGARD_${package})
-	  link_vnv_file(${package} ASGARD_${package} cpp)
-  endforeach()
-  link_vnv_file(asgard ASGARD cpp)
-  configure_file(
-  src/vv-input.json
-  ${CMAKE_BINARY_DIR}/vv-input.json
-)
-
-endif()	
 
 ###############################################################################
 ## Testing asgard
