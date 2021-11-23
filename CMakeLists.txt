@@ -183,7 +183,7 @@ endif()
 
 if (ASGARD_USE_VNV)
    find_package(Injection REQUIRED)
-
+   add_subdirectory(src/VnV)
 endif()
 
 if(ASGARD_USE_MATLAB)
@@ -399,6 +399,8 @@ if (ASGARD_USE_MPI)
 endif()
 
 target_link_libraries (asgard PRIVATE ${main_app_link_deps})
+
+target_link_libraries(asgard PRIVATE adaptivity)
 
 # build/link anything needed for profiling if requested
 if (PROFILE_DEPS)

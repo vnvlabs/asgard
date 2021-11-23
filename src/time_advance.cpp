@@ -11,6 +11,7 @@
 #include "cblacs_grid.hpp"
 #include "scalapack_vector_info.hpp"
 #endif
+#include <VnV.h>
 #include <climits>
 
 namespace time_advance
@@ -67,6 +68,9 @@ adaptive_advance(method const step_method, PDE<P> &pde,
   auto y = adaptive_grid.coarsen_solution(pde, x_orig, program_opts);
   node_out() << " adapt -- coarsened grid from " << old_size << " -> "
              << adaptive_grid.size() << " elems\n";
+
+  int64_t old_size_copy = old_size;
+  INJECTION_POINT(VNV_STR(ASGARD), VSELF, "gridsize", old_size_copy);
 
   // refine
   auto refining = true;

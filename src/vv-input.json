@@ -7,7 +7,7 @@
     "logs" : {}
   },
   "additionalPlugins": {
-    "DummyTestLibOne" : "../tests/dummyTestLibOne/libdummyTestLibOne.so"
+    "MeshWatcher" : "src/VnV/libadaptivity.so"
   },
   "outputEngine": {
     "type": "json_file",
@@ -35,6 +35,19 @@
                 "name" : "cputime",
                 "package" : "VNV",
                 "parameters": {}
+            }
+        ]
+      },
+      {
+        "name" : "gridsize",
+        "package" : "ASGARD",
+        "tests" : [
+            {
+                "name" : "adaptivityTest",
+                "package" : "MeshWatcher",
+                "parameters": {
+		    "gridSize": "old_size_copy"
+		}
             }
         ]
       }
