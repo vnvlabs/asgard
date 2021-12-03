@@ -224,6 +224,8 @@ int main(int argc, char **argv)
   
   INJECTION_LOOP_BEGIN("ASGARD", VASGARD, "TimeStep", pde);
   
+  INJECTION_LOOP_BEGIN("ASGARD", VASGARD, "AdaptiveMesh", time_advance::grid_size);
+
   for (auto i = 0; i < opts.num_time_steps; ++i)
   {
     INJECTION_LOOP_ITER("ASGARD","TimeStep","Start");
@@ -343,8 +345,10 @@ int main(int argc, char **argv)
     INJECTION_LOOP_ITER("ASGARD","TimeStep","End Step");
     node_out() << "timestep: " << i << " complete" << '\n';
   }
+  INJECTION_LOOP_END("ASGARD","AdaptiveMesh");
+
   INJECTION_LOOP_END("ASGARD","TimeStep");
-  
+
   node_out() << "--- simulation complete ---" << '\n';
 
   auto const segment_size = element_segment_size(*pde);

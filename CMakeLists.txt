@@ -400,7 +400,9 @@ endif()
 
 target_link_libraries (asgard PRIVATE ${main_app_link_deps})
 
-target_link_libraries(asgard PRIVATE adaptivity)
+if (ASGARD_USE_VNV)
+  target_link_libraries (asgard PRIVATE adaptivity)
+endif()
 
 # build/link anything needed for profiling if requested
 if (PROFILE_DEPS)

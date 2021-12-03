@@ -38,6 +38,8 @@ get_sources(PDE<P> const &pde, adapt::distributed_grid<P> const &grid,
   return sources;
 }
 
+int64_t grid_size;
+
 // FIXME want to change how sources/bcs are handled
 template<typename P>
 fk::vector<P>
@@ -69,8 +71,9 @@ adaptive_advance(method const step_method, PDE<P> &pde,
   node_out() << " adapt -- coarsened grid from " << old_size << " -> "
              << adaptive_grid.size() << " elems\n";
 
-  int64_t old_size_copy = old_size;
-  INJECTION_POINT(VNV_STR(ASGARD), VSELF, "gridsize", old_size_copy);
+#ifdef ASGARD_USE_VNV
+  INJECTION_LOOP_ITER(VNV_STR(ASGARD), "AdaptiveMesh", "Refine");
+#endif
 
   // refine
   auto refining = true;

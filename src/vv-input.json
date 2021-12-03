@@ -39,15 +39,15 @@
         ]
       },
       {
-        "name" : "gridsize",
+        "name" : "AdaptiveMesh",
         "package" : "ASGARD",
         "tests" : [
             {
                 "name" : "adaptivityTest",
                 "package" : "MeshWatcher",
                 "parameters": {
-		    "gridSize": "old_size_copy"
-		}
+                  "gridSize": "time_advance::grid_size"
+                }
             }
         ]
       }

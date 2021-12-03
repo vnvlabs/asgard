@@ -2,14 +2,12 @@
 #define _VnV_adaptivity
 
 // #include "adapt.hpp"
-// #include "basis.hpp"
 #include "VnV.h"
-// #include "interfaces/ITest.h"
 
 INJECTION_REGISTRATION(MeshWatcher);
 
 /**
- * The grid size is :vnv:`gridSize[0]`.
+ * The grid size is :vnv:`gridSize[0]` and maybe :vnv:`gridSize[1]`.
  **/
 INJECTION_TEST(MeshWatcher, adaptivityTest, int64_t gridSize) {
   //adapt::distributed_grid<P> grid = get<adapt::distributed_grid<P>>("grid");
