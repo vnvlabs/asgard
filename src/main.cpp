@@ -221,14 +221,17 @@ int main(int argc, char **argv)
 
   fk::vector<prec> f_val(initial_condition);
   node_out() << "--- begin time loop w/ dt " << pde->get_dt() << " ---\n";
-  
-  INJECTION_LOOP_BEGIN("ASGARD", VASGARD, "TimeStep", pde);
-  
-  INJECTION_LOOP_BEGIN("ASGARD", VASGARD, "AdaptiveMesh", time_advance::grid_size);
+    
+
+  node_out() << "ASASAS " << adaptive_grid.size() << " " << &adaptive_grid << "\n";  
+  /**
+   * Asgard Time Stepping Loop with Mesh Adaptivity
+   * 
+   */
+  INJECTION_LOOP_BEGIN("ASGARD", VASGARD, "TimeStepping", adaptive_grid);
 
   for (auto i = 0; i < opts.num_time_steps; ++i)
   {
-    INJECTION_LOOP_ITER("ASGARD","TimeStep","Start");
     
     // take a time advance step
     auto const time          = (i + 1) * pde->get_dt();
@@ -245,8 +248,6 @@ int main(int argc, char **argv)
         default_workspace_MB, update_system);
     f_val.resize(sol.size()) = sol;
     
-    INJECTION_LOOP_ITER("ASGARD", "TimeStep", "Advanced");
-
     tools::timer.stop(time_id);
 
     // print root mean squared error from analytic solution
@@ -341,13 +342,12 @@ int main(int argc, char **argv)
                         analytic_solution_realspace);
     }
 #endif
-
-    INJECTION_LOOP_ITER("ASGARD","TimeStep","End Step");
+    
+    INJECTION_LOOP_ITER("ASGARD","TimeStepping", "Time Step Completed");
     node_out() << "timestep: " << i << " complete" << '\n';
   }
-  INJECTION_LOOP_END("ASGARD","AdaptiveMesh");
-
-  INJECTION_LOOP_END("ASGARD","TimeStep");
+  
+  INJECTION_LOOP_END("ASGARD","TimeStepping");
 
   node_out() << "--- simulation complete ---" << '\n';
 

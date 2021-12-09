@@ -11,7 +11,8 @@
 #include "cblacs_grid.hpp"
 #include "scalapack_vector_info.hpp"
 #endif
-#include <VnV.h>
+
+#include "asgard_vnv.h"
 #include <climits>
 
 namespace time_advance
@@ -50,20 +51,32 @@ adaptive_advance(method const step_method, PDE<P> &pde,
                  P const time, int const workspace_size_MB,
                  bool const update_system)
 {
+
+  /** Begining the adaptive time step **/
+
   if (!program_opts.do_adapt_levels)
   {
     auto const my_subgrid     = adaptive_grid.get_subgrid(get_rank());
     auto const unscaled_parts = boundary_conditions::make_unscaled_bc_parts(
         pde, adaptive_grid.get_table(), transformer, my_subgrid.row_start,
         my_subgrid.row_stop);
-    return (step_method == method::exp)
+    
+  
+
+    auto result = (step_method == method::exp)
                ? explicit_advance(pde, adaptive_grid, transformer, program_opts,
                                   unscaled_parts, x_orig, workspace_size_MB,
                                   time)
                : implicit_advance(pde, adaptive_grid, transformer,
                                   unscaled_parts, x_orig, time,
                                   program_opts.solver, update_system);
+
+    
+    return result;
   }
+
+
+  INJECTION_LOOP_BEGIN("ASGARD", VASGARD, "AdaptiveAdvance", pde, adaptive_grid);
 
   // coarsen
   auto const old_size = adaptive_grid.size();
@@ -71,14 +84,14 @@ adaptive_advance(method const step_method, PDE<P> &pde,
   node_out() << " adapt -- coarsened grid from " << old_size << " -> "
              << adaptive_grid.size() << " elems\n";
 
-#ifdef ASGARD_USE_VNV
-  INJECTION_LOOP_ITER(VNV_STR(ASGARD), "AdaptiveMesh", "Refine");
-#endif
+  INJECTION_LOOP_ITER("ASGARD", "AdaptiveAdvance", "Coarsening Finished");
 
   // refine
   auto refining = true;
   while (refining)
   {
+    INJECTION_LOOP_ITER("ASGARD", "AdaptiveAdvance", "Refining");
+    
     // update boundary conditions
     auto const my_subgrid     = adaptive_grid.get_subgrid(get_rank());
     auto const unscaled_parts = boundary_conditions::make_unscaled_bc_parts(
@@ -116,6 +129,7 @@ adaptive_advance(method const step_method, PDE<P> &pde,
     }
   }
 
+  INJECTION_LOOP_END("ASGARD", "AdaptiveAdvance");
   return y;
 }
 

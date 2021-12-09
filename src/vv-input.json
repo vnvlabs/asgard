@@ -1,14 +1,4 @@
 ﻿{
-  "runTests": true,
-  "logging": {
-
-    "on" : true,
-    "filename" : "stdout",
-    "logs" : {}
-  },
-  "additionalPlugins": {
-    "MeshWatcher" : "src/VnV/libadaptivity.so"
-  },
   "outputEngine": {
     "type": "json_file",
     "config": {
@@ -17,38 +7,25 @@
   },
   "injectionPoints": [
       {
-        "name" : "initialization",
-        "package" : "VNV",
-        "tests" : [
-            {
-                "name" : "cputime",
-                "package" : "VNV",
-                "parameters": {}
-            }
-        ]
-      },
-      {
-        "name" : "TimeStep",
+        "name" : "TimeStepping",
         "package" : "ASGARD",
         "tests" : [
             {
-                "name" : "cputime",
-                "package" : "VNV",
-                "parameters": {}
-            }
+                "name" : "AdaptivtyTracking",
+                "package" : "ASGARD"
+	    }
+            
         ]
       },
       {
-        "name" : "AdaptiveMesh",
+        "name" : "AdaptiveAdvance",
         "package" : "ASGARD",
         "tests" : [
             {
-                "name" : "adaptivityTest",
-                "package" : "MeshWatcher",
-                "parameters": {
-                  "gridSize": "time_advance::grid_size"
-                }
-            }
+                "name" : "AdaptivtyTracking",
+                "package" : "ASGARD"
+	    }
+            
         ]
       }
   ]

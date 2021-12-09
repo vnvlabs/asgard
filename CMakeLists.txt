@@ -181,10 +181,7 @@ if(ASGARD_USE_MPI)
   include_directories(${MPI_CXX_INCLUDE_DIRS})
 endif()
 
-if (ASGARD_USE_VNV)
-   find_package(Injection REQUIRED)
-   add_subdirectory(src/VnV)
-endif()
+
 
 if(ASGARD_USE_MATLAB)
   find_package(Matlab REQUIRED) # Should there be a minimum MATLAB version needed?
@@ -223,9 +220,13 @@ set (components
   tools
   transformations
 )
+
 if (ASGARD_IO_HIGHFIVE)
   list (APPEND components io)
 endif ()
+
+
+
 
 if (ASGARD_USE_SCALAPACK)
   list (APPEND components scalapack_matrix_info scalapack_vector_info cblacs_grid)
@@ -319,6 +320,10 @@ if (ASGARD_USE_OPENMP AND NOT ASGARD_USE_MKL)
    target_link_libraries(lib_dispatch PRIVATE OpenMP::OpenMP_CXX)
 endif ()
 
+
+
+
+
 if (ASGARD_USE_MATLAB)
    # SYSTEM option to suppress the compiler warnings in Matlab's C++ header files
    target_include_directories(matlab_plot SYSTEM PUBLIC ${Matlab_INCLUDE_DIRS})
@@ -351,6 +356,12 @@ target_link_libraries (time_advance PRIVATE adapt fast_math pde kronmult solver 
 target_link_libraries (transformations
   PRIVATE basis batch distribution matlab_utilities pde program_options
   quadrature tensors)
+
+
+if (ASGARD_USE_VNV)
+	find_package(Injection)
+endif()
+
 
 # define the main application and its linking
 add_executable (asgard src/main.cpp)
@@ -400,9 +411,6 @@ endif()
 
 target_link_libraries (asgard PRIVATE ${main_app_link_deps})
 
-if (ASGARD_USE_VNV)
-  target_link_libraries (asgard PRIVATE adaptivity)
-endif()
 
 # build/link anything needed for profiling if requested
 if (PROFILE_DEPS)

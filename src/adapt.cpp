@@ -1,8 +1,10 @@
 #include "adapt.hpp"
 #include "distribution.hpp"
 #include "transformations.hpp"
-
+#include "build_info.hpp"
 #include <unordered_set>
+
+
 
 namespace adapt
 {
@@ -356,3 +358,60 @@ template class distributed_grid<float>;
 template class distributed_grid<double>;
 
 } // namespace adapt
+
+#include "VnV.h"
+#include <iostream>
+
+/**
+ * Asgard Adaptivity Tracking.
+ * ===========================
+ *
+ * The final grid had :vnv:`Elements[-1]` elements.
+ *
+ * .. vnv-chart::
+ *
+ *    {
+ *       "type" : "line",
+ *       "data" : {
+ *          "labels" : {{as_json(Labels)}},
+ *          "datasets" : [{
+ *             "label": "Number of elements",
+ *             "backgroundColor": "rgb(255, 99, 132)",
+ *             "borderColor": "rgb(255, 99, 132)",
+ *             "data": {{as_json(Elements)}}
+ *           }]
+ *       },
+ *       "options" : {
+ *           "animation" : false,
+ *           "responsive" : true,
+ *           "title" : { "display" : true, 
+ *                       "text" : "The Number of elements in the adaptive grid."
+ *                     }, 
+ *          "scales": { 
+ *             "yAxes": [{ 
+ *               "scaleLabel": { 
+ *                 "display": true, 
+ *                 "labelString": "Number of Elements"
+ *               }
+ *            }],
+ *            "xAxes": [{
+ *              "scaleLabel": {
+ *                 "display":true,
+ *                 "labelString": "Injection Point Stage"
+ *               }
+ *            }]
+ *          }
+ *       }
+ *    }
+ *
+ * 
+ */
+INJECTION_TEST(ASGARD, AdaptivtyTracking) {
+  
+  auto&a =  GetRef("adaptive_grid",adapt::distributed_grid<double>);
+  std::cout << "SSSSSSSSSs " << &a << std::endl;
+  engine->Put("Elements", GetRef("adaptive_grid",adapt::distributed_grid<double>).size());
+  engine->Put("Labels", stageId);
+  
+  return SUCCESS;
+}
