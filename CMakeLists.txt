@@ -181,8 +181,6 @@ if(ASGARD_USE_MPI)
   include_directories(${MPI_CXX_INCLUDE_DIRS})
 endif()
 
-
-
 if(ASGARD_USE_MATLAB)
   find_package(Matlab REQUIRED) # Should there be a minimum MATLAB version needed?
 endif()
@@ -224,9 +222,6 @@ set (components
 if (ASGARD_IO_HIGHFIVE)
   list (APPEND components io)
 endif ()
-
-
-
 
 if (ASGARD_USE_SCALAPACK)
   list (APPEND components scalapack_matrix_info scalapack_vector_info cblacs_grid)
@@ -320,10 +315,6 @@ if (ASGARD_USE_OPENMP AND NOT ASGARD_USE_MKL)
    target_link_libraries(lib_dispatch PRIVATE OpenMP::OpenMP_CXX)
 endif ()
 
-
-
-
-
 if (ASGARD_USE_MATLAB)
    # SYSTEM option to suppress the compiler warnings in Matlab's C++ header files
    target_include_directories(matlab_plot SYSTEM PUBLIC ${Matlab_INCLUDE_DIRS})
@@ -357,11 +348,10 @@ target_link_libraries (transformations
   PRIVATE basis batch distribution matlab_utilities pde program_options
   quadrature tensors)
 
-
 if (ASGARD_USE_VNV)
-	find_package(Injection)
+  find_package(Injection)
+  add_subdirectory(src/VnV)
 endif()
-
 
 # define the main application and its linking
 add_executable (asgard src/main.cpp)
@@ -385,14 +375,13 @@ if (ASGARD_IO_HIGHFIVE)
   list (APPEND main_app_link_deps io)
 endif()
 
-
 if (ASGARD_USE_MATLAB)
   list (APPEND main_app_link_deps matlab_plot)
 endif()
 
-#This should happen after all deps are added, but before 
+#This should happen after all deps are added, but before
 #the MPI dep is added. The PRIVATE in the deps breaks this
-#because its not a target. Before PULL we should add some sort
+#because it's not a target. Before PULL we should add some sort
 #of subvariable.
 if (ASGARD_USE_VNV) 
   foreach(package ${main_app_link_deps})
@@ -403,7 +392,7 @@ if (ASGARD_USE_VNV)
   src/vv-input.json
   ${CMAKE_BINARY_DIR}/vv-input.json
 )
-endif()	
+endif()
 
 if (ASGARD_USE_MPI)
 	list (APPEND main_app_link_deps PRIVATE MPI::MPI_CXX)
@@ -411,6 +400,9 @@ endif()
 
 target_link_libraries (asgard PRIVATE ${main_app_link_deps})
 
+if (ASGARD_USE_VNV)
+  target_link_libraries (asgard PRIVATE adaptivity)
+endif()
 
 # build/link anything needed for profiling if requested
 if (PROFILE_DEPS)

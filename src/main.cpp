@@ -31,28 +31,18 @@ using prec = double;
 using prec = float;
 #endif
 
-#ifdef ASGARD_USE_VNV
-#include "VnV.h"
+#include "asgard_vnv.h"
 INJECTION_EXECUTABLE(ASGARD)
 INJECTION_SUBPACKAGE(ASGARD, ASGARD_time_advance)
 INJECTION_SUBPACKAGE(ASGARD, ASGARD_pde)
 INJECTION_SUBPACKAGE(ASGARD, ASGARD_tools)
-#else
-// @VNV_TODO need to provide a stub include file for cases like this. This avoids the need 
-// for putting #ifdef ASGARD_WITH_VNV around every vnv call. 
-#define INJECTION_INITIALIZE(...) 
-#define INJECTION_FINALIZE(...)
-#define INJECTION_LOOP_BEGIN(...)
-#define INJECTION_LOOP_END(...)
-#define INJECTION_LOOP_ITER(...)
-#endif	
 
 int main(int argc, char **argv)
 {
   // -- set up distribution
   auto const [my_rank, num_ranks] = initialize_distribution();
   
-  //Initailize VnV
+  //Initialize VnV
   INJECTION_INITIALIZE(ASGARD, &argc, &argv, "./vv-input.json");
   
   // -- parse cli
@@ -221,12 +211,11 @@ int main(int argc, char **argv)
 
   fk::vector<prec> f_val(initial_condition);
   node_out() << "--- begin time loop w/ dt " << pde->get_dt() << " ---\n";
-    
 
-  node_out() << "ASASAS " << adaptive_grid.size() << " " << &adaptive_grid << "\n";  
+  node_out() << "adaptive grid " << adaptive_grid.size() << " " << &adaptive_grid << "\n";
+
   /**
-   * Asgard Time Stepping Loop with Mesh Adaptivity
-   * 
+   * Asgard Time-Stepping Loop with Mesh Adaptivity
    */
   INJECTION_LOOP_BEGIN("ASGARD", VASGARD, "TimeStepping", adaptive_grid);
 
@@ -343,11 +332,11 @@ int main(int argc, char **argv)
     }
 #endif
     
-    INJECTION_LOOP_ITER("ASGARD","TimeStepping", "Time Step Completed");
+    INJECTION_LOOP_ITER("ASGARD", "TimeStepping", "Time Step Completed");
     node_out() << "timestep: " << i << " complete" << '\n';
   }
   
-  INJECTION_LOOP_END("ASGARD","TimeStepping");
+  INJECTION_LOOP_END("ASGARD", "TimeStepping");
 
   node_out() << "--- simulation complete ---" << '\n';
 

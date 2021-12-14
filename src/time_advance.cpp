@@ -39,8 +39,6 @@ get_sources(PDE<P> const &pde, adapt::distributed_grid<P> const &grid,
   return sources;
 }
 
-int64_t grid_size;
-
 // FIXME want to change how sources/bcs are handled
 template<typename P>
 fk::vector<P>
@@ -52,7 +50,7 @@ adaptive_advance(method const step_method, PDE<P> &pde,
                  bool const update_system)
 {
 
-  /** Begining the adaptive time step **/
+  /** Beginning the adaptive time step **/
 
   if (!program_opts.do_adapt_levels)
   {
@@ -60,8 +58,6 @@ adaptive_advance(method const step_method, PDE<P> &pde,
     auto const unscaled_parts = boundary_conditions::make_unscaled_bc_parts(
         pde, adaptive_grid.get_table(), transformer, my_subgrid.row_start,
         my_subgrid.row_stop);
-    
-  
 
     auto result = (step_method == method::exp)
                ? explicit_advance(pde, adaptive_grid, transformer, program_opts,
@@ -71,7 +67,6 @@ adaptive_advance(method const step_method, PDE<P> &pde,
                                   unscaled_parts, x_orig, time,
                                   program_opts.solver, update_system);
 
-    
     return result;
   }
 
@@ -91,7 +86,7 @@ adaptive_advance(method const step_method, PDE<P> &pde,
   while (refining)
   {
     INJECTION_LOOP_ITER("ASGARD", "AdaptiveAdvance", "Refining");
-    
+
     // update boundary conditions
     auto const my_subgrid     = adaptive_grid.get_subgrid(get_rank());
     auto const unscaled_parts = boundary_conditions::make_unscaled_bc_parts(

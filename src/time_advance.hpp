@@ -46,5 +46,4 @@ implicit_advance(PDE<P> const &pde,
                  fk::vector<P> const &x, P const time, solve_opts const solver,
                  bool const update_system = true);
 
-extern int64_t grid_size;
 } // namespace time_advance

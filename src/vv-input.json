@@ -1,4 +1,7 @@
 ﻿{
+  "additionalPlugins": {
+    "MeshWatcher" : "src/VnV/libadaptivity.so"
+  },
   "outputEngine": {
     "type": "json_file",
     "config": {
@@ -11,10 +14,9 @@
         "package" : "ASGARD",
         "tests" : [
             {
-                "name" : "AdaptivtyTracking",
-                "package" : "ASGARD"
-	    }
-            
+                "name" : "AdaptivityTracking",
+                "package" : "MeshWatcher"
+	        }
         ]
       },
       {
@@ -22,10 +24,9 @@
         "package" : "ASGARD",
         "tests" : [
             {
-                "name" : "AdaptivtyTracking",
-                "package" : "ASGARD"
-	    }
-            
+                "name" : "AdaptivityTracking",
+                "package" : "MeshWatcher"
+	        }
         ]
       }
   ]
