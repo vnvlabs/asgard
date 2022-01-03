@@ -219,6 +219,12 @@ set (components
   transformations
 )
 
+set (components_shared
+  matlab_utilities
+  quadrature
+  tensors
+)
+
 if (ASGARD_IO_HIGHFIVE)
   list (APPEND components io)
 endif ()
@@ -232,7 +238,11 @@ if (ASGARD_USE_MATLAB)
 endif ()
 
 foreach (component IN LISTS components)
-  add_library (${component} src/${component}.cpp)
+  if(${component} IN_LIST components_shared)
+    add_library (${component} SHARED src/${component}.cpp)
+  else()
+    add_library (${component} src/${component}.cpp)
+  endif()
   target_include_directories (${component} PRIVATE ${CMAKE_BINARY_DIR})
   if(ASGARD_USE_MKL)
     target_compile_options (${component} PRIVATE "-fopenmp") # CMAKE doesn't handle MKL openmp link properly

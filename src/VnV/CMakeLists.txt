@@ -5,4 +5,6 @@ include_directories(AFTER ${CMAKE_BINARY_DIR})
 add_library(adaptivity SHARED "")
 
 target_sources(adaptivity PRIVATE adaptivity.cpp)
+target_link_libraries (adaptivity PRIVATE quadrature)
+
 link_vnv_file(adaptivity MeshWatcher cpp)
