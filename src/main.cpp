@@ -146,7 +146,7 @@ int main(int argc, char **argv)
   static auto const default_workspace_cpu_MB = 187000;
 
 // -- setup realspace transform for file io or for plotting
-#if defined(ASGARD_IO_HIGHFIVE) || defined(ASGARD_USE_MATLAB)
+#if defined(ASGARD_IO_HIGHFIVE) || defined(ASGARD_USE_MATLAB) || defined(ASGARD_USE_VNV)
 
   // realspace solution vector - WARNING this is
   // currently infeasible to form for large problems
@@ -172,7 +172,9 @@ int main(int argc, char **argv)
   ml::matlab_plot ml_plot;
   ml_plot.connect(cli_input.get_ml_session_string());
   node_out() << "  connected to MATLAB" << '\n';
+#endif
 
+#if defined(ASGARD_USE_MATLAB) || defined(ASGARD_USE_VNV)
   fk::vector<prec> analytic_solution_realspace(real_space_size);
   if (pde->has_analytic_soln)
   {
@@ -186,7 +188,9 @@ int main(int argc, char **argv)
         *pde, analytic_solution_init, adaptive_grid.get_table(), transformer,
         default_workspace_cpu_MB, tmp_workspace, analytic_solution_realspace);
   }
+#endif
 
+#ifdef ASGARD_USE_MATLAB
   // Add the matlab scripts directory to the matlab path
   ml_plot.add_param(std::string(ASGARD_SCRIPTS_DIR) + "matlab/");
   ml_plot.call("addpath");
@@ -217,7 +221,9 @@ int main(int argc, char **argv)
   /**
    * Asgard Time-Stepping Loop with Mesh Adaptivity
    */
-  INJECTION_LOOP_BEGIN("ASGARD", VASGARD, "TimeStepping", adaptive_grid);
+  PDE<double> *pde_deref;
+  INJECTION_LOOP_BEGIN("ASGARD", VASGARD, "TimeStepping", adaptive_grid,
+                       pde_deref, real_space, analytic_solution_realspace);
 
   for (auto i = 0; i < opts.num_time_steps; ++i)
   {
@@ -273,8 +279,10 @@ int main(int argc, char **argv)
                    << relative_errors(i) << " %" << '\n';
       }
 
-#ifdef ASGARD_USE_MATLAB
+#if defined(ASGARD_USE_MATLAB) && !defined(ASGARD_USE_VNV)
       if (opts.should_plot(i))
+#endif
+#if defined(ASGARD_USE_MATLAB) || defined(ASGARD_USE_VNV)
       {
         auto transform_wksp = update_transform_workspace<prec>(
             sol.size(), workspace, tmp_workspace);
@@ -293,9 +301,11 @@ int main(int argc, char **argv)
     {
       node_out() << "No analytic solution found." << '\n';
     }
-#if defined(ASGARD_IO_HIGHFIVE) || defined(ASGARD_USE_MATLAB)
+#if (defined(ASGARD_IO_HIGHFIVE) || defined(ASGARD_USE_MATLAB)) && !defined(ASGARD_USE_VNV)
     /* transform from wavelet space to real space */
     if (opts.should_output_realspace(i) || opts.should_plot(i))
+#endif
+#if defined(ASGARD_IO_HIGHFIVE) || defined(ASGARD_USE_MATLAB) || defined(ASGARD_USE_VNV)
     {
       // resize transform workspaces if grid size changed due to adaptivity
       auto const real_size = real_solution_size(*pde);
@@ -331,7 +341,10 @@ int main(int argc, char **argv)
                         analytic_solution_realspace);
     }
 #endif
-    
+
+    pde_deref = pde.get();
+    INJECTION_LOOP_ITER("ASGARD", "TimeStepping", "Plot Data");
+
     INJECTION_LOOP_ITER("ASGARD", "TimeStepping", "Time Step Completed");
     node_out() << "timestep: " << i << " complete" << '\n';
   }
