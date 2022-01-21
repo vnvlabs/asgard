@@ -3,31 +3,17 @@
     "MeshWatcher" : "src/VnV/libadaptivity.so"
   },
   "outputEngine": {
-    "type": "json_file",
-    "config": {
+    "json_file" : {
        "filename" : "vv-output"
     }
   },
-  "injectionPoints": [
-      {
-        "name" : "TimeStepping",
-        "package" : "ASGARD",
-        "tests" : [
-            {
-                "name" : "AdaptivityTracking",
-                "package" : "MeshWatcher"
-	        }
-        ]
-      },
-      {
-        "name" : "AdaptiveAdvance",
-        "package" : "ASGARD",
-        "tests" : [
-            {
-                "name" : "AdaptivityTracking",
-                "package" : "MeshWatcher"
-	        }
-        ]
-      }
-  ]
-}
+  "injectionPoints": {
+	"ASGARD:TimeStepping" : {
+		"tests" : { "MeshWatcher:AdaptivityTracking" : {}  }
+	},
+	"ASGARD:AdaptiveAdvance" : {
+		"tests" : { "MeshWatcher:AdaptivityTracking" : {}  }
+	}
+  }
+
+}  
