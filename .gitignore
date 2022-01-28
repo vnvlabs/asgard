@@ -6,7 +6,7 @@ _build
 compile_commands.json
 **/__pycache__
 profiling/perf_predict/internal_data
-
+.vscode
 # ignore some of contrib
 contrib/blas/openblas
 contrib/graphviz
@@ -17,4 +17,5 @@ contrib/linux
 contrib/lperftools
 contrib/valgrind
 contrib/hdf5
+contrib/KRONMULT
 contrib/highfive
