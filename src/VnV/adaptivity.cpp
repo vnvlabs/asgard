@@ -1,7 +1,6 @@
 #ifndef _VnV_adaptivity
 #define _VnV_adaptivity
 
-#include <vector>
 #include "../adapt.hpp"
 #include "VnV.h"
 
@@ -10,7 +9,6 @@ using prec = double;
 #else
 using prec = float;
 #endif
-
 
 INJECTION_REGISTRATION(MeshWatcher);
 
@@ -21,26 +19,31 @@ class Solution
   std::vector<size_t> sol_sizes_;
   std::vector<std::vector<T>> elem_coords_;
 
+  /* The next few functions are adapted from matlab_plot.cpp. */
+
 public:
-  std::vector<T>
-  generate_nodes(int const degree, int const level, T const min, T const max)
+  std::vector<T> generate_nodes(int const degree, int const level,
+                                   T const min, T const max)
   {
     // Trimmed version of matrix_plot_D.m to get only the nodes
     int const n        = pow(2, level);
     int const mat_dims = degree * n;
-    T const h          = (max - min) / n;
+    T const h       = (max - min) / n;
 
     // TODO: fully implement the output_grid options from matlab (this is just
     // the 'else' case)
-    auto const lgwt        = legendre_weights(degree, -1.0, 1.0, true);
-    auto const roots       = lgwt[0];
+    auto const lgwt  = legendre_weights(degree, -1.0, 1.0, true);
+    auto const roots = lgwt[0];
+
     unsigned int const dof = roots.size();
 
     auto nodes = std::vector<T>(mat_dims);
+
     for (int i = 0; i < n; i++)
     {
       auto p_val = legendre(roots, degree, legendre_normalization::lin);
-      p_val[0]   = p_val[0] * sqrt(1.0 / h);
+
+      p_val[0] = p_val[0] * sqrt(1.0 / h);
 
       std::vector<T> xi(dof);
       for (std::size_t j = 0; j < dof; j++)
@@ -128,6 +131,8 @@ public:
 
   void init_plotting(PDE<T> const &pde, elements::table const &table)
   {
+    VnV_Info(ASGARD, "Initializing plotting");
+
     // Generates cell array of nodes and element coordinates needed for plotting
     sol_sizes_ = get_soln_sizes(pde);
 
@@ -143,10 +148,13 @@ public:
     }
 
     elem_coords_ = gen_elem_coords(pde, table);
+
+    VnV_Info(ASGARD, "Initialized plotting");
   }
 
   void plot_fval(PDE<T> const &pde, elements::table const &table,
-                 fk::vector<T> const &f_val, fk::vector<T> const &analytic_soln)
+                 fk::vector<T> const &f_val,
+                 fk::vector<T> const &analytic_soln)
   {
     expect(sol_sizes_.size() > 0);
 
@@ -158,10 +166,20 @@ public:
       init_plotting(pde, table);
     }
 
-    // TODO
+    /**
+     * Now to plot using:
+     *
+     * analytic_soln
+     * ndims
+     * nodes_
+     * sol_sizes_
+     * f_val
+     * elem_coords_
+     */
   }
 
   std::map<std::string, int> count;
+
   std::string getStageId(std::string stage) {
       auto a = count.find(stage);
       if (a==count.end()) {
@@ -175,16 +193,19 @@ public:
 
 INJECTION_TEST_R(MeshWatcher, AdaptivityTracking, Solution<prec>)
 {
-
   // Can't use T for type parameter in these two GetRef conversions.
   auto &grid = GetRef_NoCheck("adaptive_grid", adapt::distributed_grid<prec>);
-  auto &pde  = GetRef_NoCheck("pde", std::unique_ptr<PDE<prec>>);
-
+  auto &pde = GetRef_NoCheck("pde", std::unique_ptr<PDE<prec>>);
   engine->Put("Elements", grid.size());
   engine->Put("Labels", runner->getStageId(stageId));
-  
+  if (type == VnV::InjectionPointType::Begin) {
+    runner->init_plotting(*pde, grid.get_table());
+  } else if (type == VnV::InjectionPointType::Iter && pde->has_analytic_soln) {
+    auto &real_space = GetRef_NoCheck("real_space", fk::vector<prec>);
+    auto &analytic_solution_real_space = GetRef_NoCheck("analytic_solution_realspace", fk::vector<prec>);
+    runner->plot_fval(*pde, grid.get_table(), real_space, analytic_solution_real_space);
+  }
   return SUCCESS;
-
 }
 
 #endif
