@@ -1,10 +1,6 @@
-set (CMAKE_CXX_STANDARD 17)
-set (CMAKE_CXX_STANDARD_REQUIRED ON)
 
-include_directories(AFTER ${CMAKE_BINARY_DIR})
-add_library(adaptivity SHARED "")
-
-target_sources(adaptivity PRIVATE adaptivity.cpp)
-target_link_libraries (adaptivity PRIVATE quadrature)
-
-link_vnv_file(adaptivity MeshWatcher cpp)
+target_sources(asgard PRIVATE 
+   ${CMAKE_CURRENT_SOURCE_DIR}/adaptivity.cpp
+   ${CMAKE_CURRENT_SOURCE_DIR}/plotSolution.cpp
+   ${CMAKE_CURRENT_SOURCE_DIR}/plotError.cpp
+)

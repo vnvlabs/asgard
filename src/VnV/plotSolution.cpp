@@ -195,14 +195,19 @@ public:
 
 /** @title Contour Plot Of the Solution 
    *
-   * This test produces a contour plot for a two-dimensional solution. 
+   * In this contour plot the x axis is the solution. The y 
+   * axis is the time. So, this is a contour plot of the 1D 
+   * solution against time. 
    *
-   * .....
+   * .. vnv-plotly::
+   *    :trace.main: contour
+   *    :main.y: {{as_json(time)}}
+   *    :main.z: {{as_json(solution)}}
+   *    :layout.title.text: Asgard Solution against time. 
    * 
 **/ 
-INJECTION_TEST_R(ASGARD, Plot2DSolution, Solution<prec>)
+INJECTION_TEST(ASGARD, PlotSolution)
 {
-
   // Can't use T for type parameter in these two GetRef conversions.
   auto &adaptive_grid = GetRef_NoCheck("adaptive_grid", adapt::distributed_grid<prec>);
   auto &pde  = GetRef_NoCheck("pde", std::unique_ptr<PDE<prec>>);
@@ -210,16 +215,28 @@ INJECTION_TEST_R(ASGARD, Plot2DSolution, Solution<prec>)
   auto &time = GetRef_NoCheck("time", prec);
   auto &f_val = GetRef_NoCheck("f_val", fk::vector<prec>);
   
-  // TODO -- VnV Feature Request -- GetRef_NoCheck does not support types with a "," in them :?
+  // Bug -- GetRef_NoCheck does not support types with a "," in them :?
   void *transformer_raw = GetPtr_NoCheck("transformer", void );
   auto* transformer_ptr = (basis::wavelet_transform<prec, resource::host>*) transformer_raw;
   auto& transformer = *transformer_ptr;
 
  
-  fk::vector<prec> xval,yval;
-  fk::matrix<prec> zvals;;
+  // In this example I plot time vs. solution as a contour plot. 
+  // We should just switch out the data with what we want. 
+  
+  if (type == VnV::InjectionPointType::Iter)
+  {
+    engine->Put("time", time); // Add the time value to the time vector;
 
-  //,,,,,
+    // Does fk::vector gauarantee contiguous storage? -- I guess we will find out.
+    // This adds a new "vector" to the solution vector. After "X" timesteps we have
+
+    // time --> 1x10 array of time values
+    // solution 10x<GridSize> matrix of solution values. 
+    engine->Put_Vector("solution", f_val.size(), f_val.data());
+
+  } 
+  return SUCCESS;
 }
 
 #endif

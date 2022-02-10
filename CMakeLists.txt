@@ -358,10 +358,6 @@ target_link_libraries (transformations
   PRIVATE basis batch distribution matlab_utilities pde program_options
   quadrature tensors)
 
-if (ASGARD_USE_VNV)
-  find_package(Injection)
-  add_subdirectory(src/VnV)
-endif()
 
 # define the main application and its linking
 add_executable (asgard src/main.cpp)
@@ -394,10 +390,15 @@ endif()
 #because it's not a target. Before PULL we should add some sort
 #of subvariable.
 if (ASGARD_USE_VNV) 
+
+  find_package(Injection)
+  add_subdirectory(src/VnV)
+  link_vnv_file(asgard ASGARD cpp)
+
   foreach(package ${main_app_link_deps})
 	link_vnv_file(${package} ASGARD_${package} cpp)
   endforeach()
-  link_vnv_file(asgard ASGARD cpp)
+  
   configure_file(
   src/vv-input.json
   ${CMAKE_BINARY_DIR}/vv-input.json
@@ -410,9 +411,6 @@ endif()
 
 target_link_libraries (asgard PRIVATE ${main_app_link_deps})
 
-if (ASGARD_USE_VNV)
-  target_link_libraries (asgard PRIVATE adaptivity)
-endif()
 
 # build/link anything needed for profiling if requested
 if (PROFILE_DEPS)

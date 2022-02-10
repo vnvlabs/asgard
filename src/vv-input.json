@@ -1,7 +1,4 @@
 ﻿{
-  "additionalPlugins": {
-    "MeshWatcher" : "src/VnV/libadaptivity.so"
-  },
   "outputEngine": {
     "json_file" : {
        "filename" : "vv-output"
@@ -9,10 +6,10 @@
   },
   "injectionPoints": {
 	"ASGARD:TimeStepping" : {
-		"tests" : { "MeshWatcher:AdaptivityTracking" : {}  }
-	},
-	"ASGARD:AdaptiveAdvance" : {
-		"tests" : { "MeshWatcher:AdaptivityTracking" : {}  }
+		"tests" : { 
+			"ASGARD:PlotError" : {}, 
+	       		"ASGARD:PlotSolution" : {}
+		}
 	}
   }
 
