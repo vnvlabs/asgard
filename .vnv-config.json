@@ -4,7 +4,7 @@
 
   },
   "executables" : {
-
+       "Asgard" : {"package" : "Asgard", "filename" : "./build/heat", "description" : "The Asgard Solver"}   
   },
   "plugins" : {
 
