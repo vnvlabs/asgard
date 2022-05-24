@@ -1,0 +1,16 @@
+{
+    "logo" : {
+        "small" : "asgard/static/logo.png",
+        "large" : "asgard/static/large.png"
+    },
+    "copyright" : {
+        "message" : "RNET Technolgies Inc.",
+        "link" : "https://rnet-tech.com"
+    },
+    "home" : "index.html",
+    "title" : "ASGARD",
+    "blueprints" : {
+        "asgard" : "./asgard"
+    },
+    "exclude_parents" : true
+}

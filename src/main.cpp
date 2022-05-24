@@ -32,17 +32,106 @@ using prec = float;
 #endif
 
 #include "asgard_vnv.h"
+
+/**
+ * @title Adaptive Sparse Grid Discretization with ASGARD
+ * @description The Main Asgard Application
+ * @shortTitle ASGARD
+ * @configuration { 
+ * "input" : {
+ *     "outputEngine": {
+ *       "json_file": {
+ *           "filename": "aout"
+ *       }
+ *   },
+ *   "options":{
+ *       "ASGARD" : {
+ *           "adapt" : true,
+ *           "adaptive_threshold" : 0.001,
+ *           "max_levels" : 8
+ *       }
+ *   },
+ *   "injectionPoints" : {
+ *       "ASGARD:Configuration" : {
+ *           "tests" : {
+ *               "VNV:cputime" : {}
+ *           }
+ *       },
+ *       "ASGARD:TimeStepping" : {
+ *           "tests" : {
+ *               "ASGARD:PlotSolution" : {}
+ *           }
+ *       }
+ *    }
+ *  }
+ * }
+ * 
+ * 
+ * Adaptive Sparse Grid Discretization:
+ * ====================================
+ * 
+ * Many scientific domains require the solution of
+ * high dimensional PDEs. Traditional grid- or mesh-based methods for solving
+ * such systems in a noise-free manner quickly become intractable due to the
+ * scaling of the degrees of freedom going as O(N^d) sometimes called "the curse
+ * of dimensionality." This application implements  an arbitrarily high-order
+ * discontinuous-Galerkin finite-element solver that leverages an adaptive
+ * sparse-grid discretization whose degrees of freedom scale as O(N*log2 N^D-1).
+ * This method and its subsequent reduction in the required resources is being
+ * applied to several PDEs including time-domain Maxwell's equations (3D), the
+ * Vlasov equation (in up to 6D) and a Fokker-Planck-like problem in ongoing
+ * related efforts.
+ *
+ * This implementation is designed to run on multiple accelerated architectures,
+ * including distributed systems. The implementation takes advantage of a system
+ * matrix decomposed as the Kronecker product of many smaller matrices which is
+ * implemented as batched operations.
+ *
+ */
 INJECTION_EXECUTABLE(ASGARD)
 INJECTION_SUBPACKAGE(ASGARD, ASGARD_time_advance)
 INJECTION_SUBPACKAGE(ASGARD, ASGARD_pde)
 INJECTION_SUBPACKAGE(ASGARD, ASGARD_tools)
 
+class AsgardOptions
+{
+  nlohmann::json jj;
+
+public:
+  AsgardOptions(const nlohmann::json &j) : jj(j) {}
+};
+
+/**
+ * @title Asgard VnV Options:
+ *
+ * Asgard Options Information
+ * --------------------------
+ *
+ * TODO Write out some information about ASGARD HERE -- Not really sure what goes here to be 
+ * honest. 
+ * 
+ */
+INJECTION_OPTIONS(ASGARD, R"(
+  {
+   "type" : "object",
+   "properties" : {
+       "cfl" : { "type" : "number" , "default" : 0.01, "min" : 1e-10, "max":5,  "description" : "What CFL number should we target?"},
+       "adaptive_threshold" : { "type" : "number" , "default" : 1e-3 , "min" : 0,  "description" : "The threshold for adaption" },
+       "max_levels" : {"type" : "integer" , "default" : 8, "min" : 0, "description" : "Maximum number of levels" },
+       "time_steps" : {"type" : "integer" , "default" : 10, "min" : 1 ,  "description" : "How many time steps should we take?"},
+       "adapt" : {"type" : "boolean" , "default" : false,  "description" : "Use Adaptive Grids?"},
+       "poisson" : {"type" : "boolean" , "default" : false,  "description" : "Use Poisson?"},
+       "implicit" : {"type" : "boolean" , "default" : false, "description" : "Use an implicit time stepping algorithm?" }}
+  }
+  )")
+{
+  return new AsgardOptions(config);
+}
+
 int main(int argc, char **argv)
 {
   // -- set up distribution
   auto const [my_rank, num_ranks] = initialize_distribution();
-
-
 
   // -- parse cli
   parser const cli_input(argc, argv);
@@ -52,6 +141,28 @@ int main(int argc, char **argv)
     exit(-1);
   }
 
+  /**
+   * @title Asgard Application. 
+   * @shortTitle Asgard Main.
+   * 
+   * Many scientific domains require the solution of
+   * high dimensional PDEs. Traditional grid- or mesh-based methods for solving
+   * such systems in a noise-free manner quickly become intractable due to the
+   * scaling of the degrees of freedom going as O(N^d) sometimes called "the curse
+   * of dimensionality." This application implements  an arbitrarily high-order
+   * discontinuous-Galerkin finite-element solver that leverages an adaptive
+   * sparse-grid discretization whose degrees of freedom scale as O(N*log2 N^D-1).
+   * This method and its subsequent reduction in the required resources is being
+   * applied to several PDEs including time-domain Maxwell's equations (3D), the
+   * Vlasov equation (in up to 6D) and a Fokker-Planck-like problem in ongoing
+   * related efforts.
+   *
+   * This implementation is designed to run on multiple accelerated architectures,
+   * including distributed systems. The implementation takes advantage of a system
+   * matrix decomposed as the Kronecker product of many smaller matrices which is
+   * implemented as batched operations.
+   * 
+   */
   INJECTION_INITIALIZE(ASGARD, &argc, &argv, "./vv-input.json");
 
   options const opts(cli_input);
@@ -64,10 +175,62 @@ int main(int argc, char **argv)
     return 0;
   }
 
+  /**
+   * @title Application Configuration:
+   * @shortTitle Configuration
+   * @description Configuration stage of the Asgard process.
+   * 
+   * 
+   * Compilation information
+   * -----------------------
+   *
+   * .. vnv-quick-table::
+   *    :names: ["Property", "Value"]
+   *    :fields: ["name", "value"]
+   *    :data: *|[?_table==`build`].{ "name" : Name , "value" : Value }
+   *
+   *
+   * Application Configuration
+   * --------------------------
+   *
+   * .. vnv-quick-table::
+   *    :names: ["Property", "Value"]
+   *    :fields: ["name", "value"]
+   *    :data: *|[?_table==`run`].{ "name" : Name , "value" : Value }
+   *
+   * 
+   */
+  INJECTION_LOOP_BEGIN_C(
+      "ASGARD", VASGARD, "Configuration",
+      IPCALLBACK {
+        if (type == VnV::InjectionPointType::Begin)
+        {
+          VnV::MetaData d;
+          d["table"] = "build";
+          engine->Put("Commit Branch", GIT_BRANCH, d);
+          engine->Put("Commit Summary", GIT_COMMIT_SUMMARY, d);
+          engine->Put("Commit Hash", GIT_COMMIT_HASH, d);
+          engine->Put("Build Time", BUILD_TIME, d);
+
+          d["table"] = "run";
+          engine->Put("PDE", cli_input.get_pde_string(), d);
+          engine->Put("Time Steps: ", opts.num_time_steps, d);
+          engine->Put("Write freq: ", opts.wavelet_output_freq, d);
+          engine->Put("Realspace freq: ", opts.realspace_output_freq, d);
+          engine->Put("Implicit Stepper: ", opts.use_implicit_stepping, d);
+          engine->Put("Full grid: ", opts.use_full_grid, d);
+          engine->Put("CFL number: ", cli_input.get_cfl(), d);
+          engine->Put("Poisson solve: ", opts.do_poisson_solve, d);
+          engine->Put("Maximum adaptivity levels: ", opts.max_level, d);
+        }
+      },
+      opts, cli_input);
+
   node_out() << "Branch: " << GIT_BRANCH << '\n';
-  node_out() << "Commit Summary: " << GIT_COMMIT_HASH << GIT_COMMIT_SUMMARY
-             << '\n';
+  node_out() << "Commit Summary: " << GIT_COMMIT_HASH << GIT_COMMIT_SUMMARY << '\n';
   node_out() << "This executable was built on " << BUILD_TIME << '\n';
+
+  INJECTION_LOOP_ITER("ASGARD", "Configuration", "Generate PDE");
 
   // -- generate pde
   node_out() << "generating: pde..." << '\n';
@@ -103,6 +266,8 @@ int main(int argc, char **argv)
   // -- along with a distribution plan. this is the adaptive grid.
   node_out() << "  generating: adaptive grid..." << '\n';
 
+  INJECTION_LOOP_ITER("ASGARD", "Configuration", "Generate Adaptive Grid");
+
   adapt::distributed_grid adaptive_grid(*pde, opts);
   node_out() << "  degrees of freedom: "
              << adaptive_grid.size() *
@@ -110,9 +275,14 @@ int main(int argc, char **argv)
              << '\n';
 
   node_out() << "  generating: basis operator..." << '\n';
+  INJECTION_LOOP_ITER("ASGARD", "Configuration", "Generate Basis Operator");
+
   auto const quiet = false;
   basis::wavelet_transform<prec, resource::host> const transformer(opts, *pde,
                                                                    quiet);
+
+  INJECTION_LOOP_ITER("ASGARD", "Configuration", "Generate IC");
+
   // -- generate initial condition vector
   node_out() << "  generating: initial conditions..." << '\n';
   auto const initial_condition =
@@ -123,12 +293,16 @@ int main(int argc, char **argv)
              << '\n';
 
   // -- generate and store coefficient matrices.
+  INJECTION_LOOP_ITER("ASGARD", "Configuration", "Generate Coeff Matrix");
+
   node_out() << "  generating: coefficient matrices..." << '\n';
   generate_all_coefficients<prec>(*pde, transformer);
 
   // this is to bail out for further profiling/development on the setup routines
   if (opts.num_time_steps < 1)
     return 0;
+
+  INJECTION_LOOP_END("ASGARD", "Configuration");
 
   node_out() << "--- begin time loop staging ---" << '\n';
 
@@ -213,21 +387,39 @@ int main(int argc, char **argv)
 
   fk::vector<prec> f_val(initial_condition);
   node_out() << "--- begin time loop w/ dt " << pde->get_dt() << " ---\n";
-  
+
   prec time = 0;
-  INJECTION_LOOP_BEGIN("ASGARD", VASGARD, "TimeStepping", adaptive_grid, pde, opts, time, f_val,  transformer);
+
+  /**
+   * @title ASGARD Time Stepping Loop
+   * @shortTitle Step
+   * @description The Core time stepping loop
+   *
+   * In this section of the code we propergate the initial condition forward in
+   * time using :vnv:`timesteps` timesteps of an :vnv:`implicit` time stepping 
+   * routine.  
+   * 
+   */
+  INJECTION_LOOP_BEGIN_C("ASGARD", VASGARD, "TimeStepping", IPCALLBACK {
+
+    if (type == VnV::InjectionPointType::Begin) {
+      engine->Put("timesteps", opts.num_time_steps);
+      engine->Put("impicit", opts.use_implicit_stepping ? "implicit" : "explicit");
+    }
+  }, adaptive_grid, pde, opts, time, f_val, transformer);
+  
   for (auto i = 0; i < opts.num_time_steps; ++i)
   {
     // take a time advance step
-    time          = (i + 1) * pde->get_dt();
+    time = (i + 1) * pde->get_dt();
 
     auto const update_system = i == 0;
-    auto const method = opts.use_implicit_stepping ? time_advance::method::imp
-                                                   : time_advance::method::exp;
+    auto const method   = opts.use_implicit_stepping ? time_advance::method::imp
+                                                     : time_advance::method::exp;
     auto const time_str = opts.use_implicit_stepping ? "implicit_time_advance"
                                                      : "explicit_time_advance";
-    auto const time_id = tools::timer.start(time_str);
-    auto const sol     = time_advance::adaptive_advance(
+    auto const time_id  = tools::timer.start(time_str);
+    auto const sol      = time_advance::adaptive_advance(
         method, *pde, adaptive_grid, transformer, opts, f_val, time,
         default_workspace_MB, update_system);
     f_val.resize(sol.size()) = sol;
@@ -338,7 +530,7 @@ int main(int argc, char **argv)
       f_val, adaptive_grid.get_distrib_plan(), my_rank, segment_size);
 
   node_out() << tools::timer.report() << '\n';
-  
+
   INJECTION_FINALIZE(ASGARD)
 
   finalize_distribution();
