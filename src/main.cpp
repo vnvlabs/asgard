@@ -200,9 +200,7 @@ int main(int argc, char **argv)
    *
    * 
    */
-  INJECTION_LOOP_BEGIN_C(
-      "ASGARD", VASGARD, "Configuration",
-      IPCALLBACK {
+  INJECTION_LOOP_BEGIN_C(ASGARD, VASGARD, Configuration, IPCALLBACK {
         if (type == VnV::InjectionPointType::Begin)
         {
           VnV::MetaData d;
@@ -230,7 +228,7 @@ int main(int argc, char **argv)
   node_out() << "Commit Summary: " << GIT_COMMIT_HASH << GIT_COMMIT_SUMMARY << '\n';
   node_out() << "This executable was built on " << BUILD_TIME << '\n';
 
-  INJECTION_LOOP_ITER("ASGARD", "Configuration", "Generate PDE");
+  INJECTION_LOOP_ITER(ASGARD, Configuration, Generate PDE);
 
   // -- generate pde
   node_out() << "generating: pde..." << '\n';
@@ -266,7 +264,7 @@ int main(int argc, char **argv)
   // -- along with a distribution plan. this is the adaptive grid.
   node_out() << "  generating: adaptive grid..." << '\n';
 
-  INJECTION_LOOP_ITER("ASGARD", "Configuration", "Generate Adaptive Grid");
+  INJECTION_LOOP_ITER(ASGARD, Configuration, Generate Adaptive Grid);
 
   adapt::distributed_grid adaptive_grid(*pde, opts);
   node_out() << "  degrees of freedom: "
@@ -275,13 +273,14 @@ int main(int argc, char **argv)
              << '\n';
 
   node_out() << "  generating: basis operator..." << '\n';
-  INJECTION_LOOP_ITER("ASGARD", "Configuration", "Generate Basis Operator");
+
+  INJECTION_LOOP_ITER(ASGARD, Configuration, Generate Basis Operator);
 
   auto const quiet = false;
   basis::wavelet_transform<prec, resource::host> const transformer(opts, *pde,
                                                                    quiet);
 
-  INJECTION_LOOP_ITER("ASGARD", "Configuration", "Generate IC");
+  INJECTION_LOOP_ITER(ASGARD, Configuration, Generate IC);
 
   // -- generate initial condition vector
   node_out() << "  generating: initial conditions..." << '\n';
@@ -293,7 +292,7 @@ int main(int argc, char **argv)
              << '\n';
 
   // -- generate and store coefficient matrices.
-  INJECTION_LOOP_ITER("ASGARD", "Configuration", "Generate Coeff Matrix");
+  INJECTION_LOOP_ITER(ASGARD, Configuration, Generate Coeff Matrix);
 
   node_out() << "  generating: coefficient matrices..." << '\n';
   generate_all_coefficients<prec>(*pde, transformer);
@@ -302,7 +301,7 @@ int main(int argc, char **argv)
   if (opts.num_time_steps < 1)
     return 0;
 
-  INJECTION_LOOP_END("ASGARD", "Configuration");
+  INJECTION_LOOP_END(ASGARD, Configuration);
 
   node_out() << "--- begin time loop staging ---" << '\n';
 
@@ -400,7 +399,7 @@ int main(int argc, char **argv)
    * routine.  
    * 
    */
-  INJECTION_LOOP_BEGIN_C("ASGARD", VASGARD, "TimeStepping", IPCALLBACK {
+  INJECTION_LOOP_BEGIN_C(ASGARD, VASGARD, TimeStepping, IPCALLBACK {
 
     if (type == VnV::InjectionPointType::Begin) {
       engine->Put("timesteps", opts.num_time_steps);
@@ -516,10 +515,10 @@ int main(int argc, char **argv)
                         analytic_solution_realspace);
     }
 #endif
-    INJECTION_LOOP_ITER("ASGARD", "TimeStepping", "TS " + std::to_string(i));
+    INJECTION_LOOP_ITER_D(ASGARD, TimeStepping, "TS " + std::to_string(i));
     node_out() << "timestep: " << i << " complete" << '\n';
   }
-  INJECTION_LOOP_END("ASGARD", "TimeStepping");
+  INJECTION_LOOP_END(ASGARD, TimeStepping);
   node_out() << "--- simulation complete ---" << '\n';
 
   auto const segment_size = element_segment_size(*pde);
