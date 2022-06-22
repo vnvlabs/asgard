@@ -50,12 +50,11 @@ endif ()
 #  Setup and build OpenBLAS if ASGARD_BUILD_OPENBLAS is ON
 #-------------------------------------------------------------------------------
 if (${ASGARD_BUILD_OPENBLAS})
-#  FIXME: Once fixes from the forked OpenBLAS are merged switch the git repo
-#  back to an offical release.
     register_project (openblas
                       OPENBLAS
-                      https://github.com/cianciosa/OpenBLAS.git
-                      develop
+                      https://github.com/xianyi/OpenBLAS.git
+                      v0.3.19
+                      ${CMAKE_SOURCE_DIR}/contrib/openblas.patch
     )
 
 #  Fetch content does not run the install phase so the headers for openblas are
@@ -140,5 +139,6 @@ else ()
                                 INTERFACE
                                 $<$<OR:$<AND:$<PLATFORM_ID:Darwin>,$<STREQUAL:${BLA_VENDOR},All>>,$<STREQUAL:${BLA_VENDOR},Apple>,$<STREQUAL:${BLA_VENDOR},NAS>>:ASGARD_ACCELERATE>
                                 $<$<STREQUAL:${BLA_VENDOR},OpenBLAS>:ASGARD_OPENBLAS>
+                                $<$<OR:$<STREQUAL:${BLA_VENDOR},Intel10_32>,$<STREQUAL:${BLA_VENDOR},Intel10_64lp>,$<STREQUAL:${BLA_VENDOR},Intel10_64lp_seq>,$<STREQUAL:${BLA_VENDOR},Intel10_64ilp>,$<STREQUAL:${BLA_VENDOR},Intel10_64ilp_seq>,$<STREQUAL:${BLA_VENDOR},Intel10_64_dyn>>:ASGARD_MKL>
     )
 endif ()

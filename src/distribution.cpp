@@ -7,6 +7,16 @@
 #include <list>
 #include <numeric>
 
+#ifdef ASGARD_USE_SCALAPACK
+extern "C"
+{
+  void pdgeadd_(char *, int *, int *, double *, double *, int *, int *, int *,
+                double *, double *, int *, int *, int *);
+  void psgeadd_(char *, int *, int *, float *, float *, int *, int *, int *,
+                float *, float *, int *, int *, int *);
+}
+#endif
+
 #ifdef ASGARD_USE_MPI
 struct distribution_handler
 {
@@ -19,8 +29,12 @@ struct distribution_handler
   }
   MPI_Comm get_global_comm() const { return global_comm; }
 
+  void set_active(bool const status) { active = status; }
+  bool is_active() { return active; }
+
 private:
   MPI_Comm global_comm = MPI_COMM_WORLD;
+  bool active          = true;
 };
 static distribution_handler distro_handle;
 #endif
@@ -85,6 +99,14 @@ int get_num_ranks()
   return 1;
 }
 
+bool is_active()
+{
+#ifdef ASGARD_USE_MPI
+  return distro_handle.is_active();
+#endif
+  return true;
+}
+
 // to simplify distribution, we have designed the code
 // to run with even and/or perfect square number of ranks.
 
@@ -141,6 +163,10 @@ std::array<int, 2> initialize_distribution()
   {
     distro_handle.set_global_comm(effective_communicator);
     initialize_libraries(get_local_rank());
+  }
+  else
+  {
+    distro_handle.set_active(false);
   }
 
   return {my_rank, num_participating};
@@ -751,7 +777,7 @@ P get_global_max(P const my_max, distribution_plan const &plan)
   auto const my_col                  = my_rank % num_cols;
   auto success =
       MPI_Comm_split(global_communicator, my_row, my_col, &row_communicator);
-  assert(success == 0);
+  expect(success == 0);
 
   // get max
   MPI_Datatype const mpi_type =
@@ -760,12 +786,12 @@ P get_global_max(P const my_max, distribution_plan const &plan)
   P global_max;
   success = MPI_Allreduce(&my_max, &global_max, 1, mpi_type, MPI_MAX,
                           row_communicator);
-  assert(success == 0);
+  expect(success == 0);
   success = MPI_Comm_free(&row_communicator);
-  assert(success == 0);
+  expect(success == 0);
 
 #else
-  assert(plan.size() == 1);
+  expect(plan.size() == 1);
   auto const global_max = my_max;
 #endif
 
@@ -786,14 +812,14 @@ distribute_table_changes(std::vector<int64_t> const &my_changes,
   auto const my_rank      = get_rank();
   auto const num_messages = [&plan, &my_changes, my_rank]() {
     std::vector<int> num_messages(plan.size());
-    assert(my_changes.size() < INT_MAX);
-    num_messages[get_rank()] = static_cast<int>(my_changes.size());
-    assert(plan.size() < INT_MAX);
+    expect(my_changes.size() < INT_MAX);
+    num_messages[my_rank] = static_cast<int>(my_changes.size());
+    expect(plan.size() < INT_MAX);
     for (auto i = 0; i < static_cast<int>(plan.size()); ++i)
     {
       auto const success = MPI_Bcast(num_messages.data() + i, 1, MPI_INT, i,
                                      distro_handle.get_global_comm());
-      assert(success == 0);
+      expect(success == 0);
     }
     return num_messages;
   }();
@@ -821,13 +847,13 @@ distribute_table_changes(std::vector<int64_t> const &my_changes,
       all_changes.data(), num_messages.data(), displacements.data(),
       MPI_INT64_T, distro_handle.get_global_comm());
 
-  assert(success == 0);
+  expect(success == 0);
 
   return all_changes;
 
 #else
   // plan size > 1, MPI off - shouldn't occur
-  assert(false);
+  expect(false);
   return my_changes;
 #endif
 }
@@ -841,7 +867,7 @@ region_messages_remap(distribution_plan const &old_plan,
                       grid_limits const source_region,
                       grid_limits const dest_region, int const rank)
 {
-  assert(rank >= 0);
+  expect(rank >= 0);
 
   // we should only need to communicate with our own (old) row of subgrids
   // each has a full copy of the vector
@@ -860,7 +886,7 @@ region_messages_remap(distribution_plan const &old_plan,
   // of this region.
   auto const my_new_subgrid = new_plan.at(rank);
   auto dest_subregion_start = dest_region.start;
-  assert(dest_subregion_start >= my_new_subgrid.col_start);
+  expect(dest_subregion_start >= my_new_subgrid.col_start);
 
   for (auto i = 0; i < cols; ++i)
   {
@@ -905,7 +931,7 @@ region_messages_remap(distribution_plan const &old_plan,
     }
   }
 
-  assert((dest_subregion_start = dest_region.stop + 1));
+  expect((dest_subregion_start = dest_region.stop + 1));
   return region_messages;
 }
 
@@ -918,7 +944,7 @@ subgrid_messages_remap(distribution_plan const &old_plan,
                        std::map<int64_t, grid_limits> const &elem_index_remap,
                        int const rank)
 {
-  assert(rank >= 0);
+  expect(rank >= 0);
 
   std::vector<std::list<message>> subgrid_messages(new_plan.size());
   auto const rank_subgrid = new_plan.at(rank);
@@ -962,8 +988,8 @@ generate_messages_remap(distribution_plan const &old_plan,
                         distribution_plan const &new_plan,
                         std::map<int64_t, grid_limits> const &elem_index_remap)
 {
-  assert(old_plan.size() == new_plan.size());
-  assert(elem_index_remap.size() != 0);
+  expect(old_plan.size() == new_plan.size());
+  expect(elem_index_remap.size() != 0);
 
   // TODO technically, all these calculations will yield the same set of
   // messages for each subgrid row. if this requires optimization, just perform
@@ -975,7 +1001,7 @@ generate_messages_remap(distribution_plan const &old_plan,
     ignore(subgrid);
     auto rank_messages =
         subgrid_messages_remap(old_plan, new_plan, elem_index_remap, rank);
-    assert(rank_messages.size() == new_plan.size());
+    expect(rank_messages.size() == new_plan.size());
     for (auto const &[rank, subgrid] : new_plan)
     {
       ignore(subgrid);
@@ -1007,9 +1033,9 @@ redistribute_vector(fk::vector<P> const &old_x,
                     distribution_plan const &new_plan,
                     std::map<int64_t, grid_limits> const &elem_remap)
 {
-  assert(old_plan.size() == new_plan.size());
-  assert(check_overlap(elem_remap));
-  assert(elem_remap.size() != 0);
+  expect(old_plan.size() == new_plan.size());
+  expect(check_overlap(elem_remap));
+  expect(elem_remap.size() != 0);
 
   auto const my_rank     = get_rank();
   auto const old_subgrid = old_plan.at(my_rank);
@@ -1017,7 +1043,7 @@ redistribute_vector(fk::vector<P> const &old_x,
 
   // x's size should be num_elements*deg^dim
   // (deg^dim is one element's number of coefficients/ elements in x vector)
-  assert(old_x.size() % old_subgrid.ncols() == 0);
+  expect(old_x.size() % old_subgrid.ncols() == 0);
   auto const segment_size = old_x.size() / old_subgrid.ncols();
   fk::vector<P> y(new_subgrid.ncols() * segment_size);
 
@@ -1121,13 +1147,85 @@ fk::vector<P> row_to_col_major(fk::vector<P> const &x, int size_r)
 void bcast(int *value, int size, int rank)
 {
 #ifdef ASGARD_USE_MPI
-  MPI_Bcast(value, size, MPI_INT, rank, distro_handle.get_global_comm());
+  if (distro_handle.is_active())
+  {
+    MPI_Bcast(value, size, MPI_INT, rank, distro_handle.get_global_comm());
+  }
 #else
   (void)value;
   (void)size;
   (void)rank;
 #endif
 }
+
+#ifdef ASGARD_USE_SCALAPACK
+std::shared_ptr<cblacs_grid> get_grid()
+{
+  auto grid = std::make_shared<cblacs_grid>(distro_handle.get_global_comm());
+  return grid;
+}
+
+template<typename P>
+void gather_matrix(P *A, int *descA, P *A_distr, int *descA_distr)
+{
+  // Useful constants
+  P zero{0.0}, one{1.0};
+  int i_one{1};
+  char N{'N'};
+  int n = descA[fk::N_];
+  int m = descA[fk::M_];
+  // Call pdgeadd_ to distribute matrix (i.e. copy A into A_distr)
+  if constexpr (std::is_same<P, double>::value)
+  {
+    pdgeadd_(&N, &m, &n, &one, A_distr, &i_one, &i_one, descA_distr, &zero, A,
+             &i_one, &i_one, descA);
+  }
+  else if constexpr (std::is_same<P, float>::value)
+  {
+    psgeadd_(&N, &m, &n, &one, A_distr, &i_one, &i_one, descA_distr, &zero, A,
+             &i_one, &i_one, descA);
+  }
+  else
+  { // not instantiated; should never be reached
+    std::cerr << "geadd not implemented for non-floating types" << '\n';
+    expect(false);
+  }
+}
+
+template<typename P>
+void scatter_matrix(P *A, int *descA, P *A_distr, int *descA_distr)
+{
+  // Useful constants
+  P zero{0.0}, one{1.0};
+  int i_one{1};
+  char N{'N'};
+  // Call pdgeadd_ to distribute matrix (i.e. copy A into A_distr)
+  int n = descA[fk::N_];
+  int m = descA[fk::M_];
+
+  int desc[9];
+  if (get_rank() == 0)
+  {
+    std::copy_n(descA, 9, desc);
+  }
+  bcast(desc, 9, 0);
+  if constexpr (std::is_same<P, double>::value)
+  {
+    pdgeadd_(&N, &m, &n, &one, A, &i_one, &i_one, desc, &zero, A_distr, &i_one,
+             &i_one, descA_distr);
+  }
+  else if constexpr (std::is_same<P, float>::value)
+  {
+    psgeadd_(&N, &m, &n, &one, A, &i_one, &i_one, desc, &zero, A_distr, &i_one,
+             &i_one, descA_distr);
+  }
+  else
+  { // not instantiated; should never be reached
+    std::cerr << "geadd not implemented for non-floating types" << '\n';
+    expect(false);
+  }
+}
+#endif
 
 template void reduce_results(fk::vector<float> const &source,
                              fk::vector<float> &dest,
@@ -1186,3 +1284,13 @@ template fk::vector<float>
 col_to_row_major(fk::vector<float> const &x, int size_r);
 template fk::vector<double>
 col_to_row_major(fk::vector<double> const &x, int size_r);
+#ifdef ASGARD_USE_SCALAPACK
+template void
+gather_matrix<float>(float *A, int *descA, float *A_distr, int *descA_distr);
+template void
+gather_matrix<double>(double *A, int *descA, double *A_distr, int *descA_distr);
+template void
+scatter_matrix<float>(float *A, int *descA, float *A_distr, int *descA_distr);
+template void scatter_matrix<double>(double *A, int *descA, double *A_distr,
+                                     int *descA_distr);
+#endif

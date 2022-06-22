@@ -99,7 +99,7 @@ adaptive_advance(method const step_method, PDE<P> &pde,
             ? explicit_advance(pde, adaptive_grid, transformer, program_opts,
                                unscaled_parts, y, workspace_size_MB, time)
             : implicit_advance(pde, adaptive_grid, transformer, unscaled_parts,
-                               y, time, program_opts.solver, update_system);
+                               y, time, program_opts.solver, refining);
 
     auto const old_plan = adaptive_grid.get_distrib_plan();
     auto const old_size = adaptive_grid.size();
@@ -272,7 +272,7 @@ implicit_advance(PDE<P> const &pde,
 {
   expect(time >= 0);
 #ifdef ASGARD_USE_SCALAPACK
-  std::shared_ptr<cblacs_grid> sgrid = std::make_shared<cblacs_grid>();
+  auto sgrid = get_grid();
 #endif
   static fk::matrix<P, mem_type::owner, resource::host> A;
   static std::vector<int> ipiv;

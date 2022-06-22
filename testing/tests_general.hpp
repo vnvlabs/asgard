@@ -6,14 +6,24 @@
 
 #pragma once
 
-#include "catch.hpp"
+#include "build_info.hpp"
 #include "src/fast_math.hpp"
 #include "src/pde.hpp"
 #include "src/program_options.hpp"
+#include <filesystem>
 #include <sstream>
 #include <string>
 #include <utility>
 #include <vector>
+#include <catch2/catch_all.hpp>
+
+static inline const std::filesystem::path gold_base_dir{ASGARD_GOLD_BASE_DIR};
+
+template<typename P>
+constexpr P get_tolerance(int ulp)
+{
+  return std::numeric_limits<P>::epsilon()*ulp;
+}
 
 /* These functions implement: norm( v0 - v1 ) < tolerance * max( norm(v0),
  * norm(v1) )*/
@@ -31,7 +41,7 @@ void rmse_comparison(fk::vector<P, mem> const &v0,
       static_cast<P>(1.0),
       std::max(std::abs(*std::max_element(v0.begin(), v0.end(), abs_compare)),
                std::abs(*std::max_element(v1.begin(), v1.end(), abs_compare))));
-  Catch::StringMaker<P>::precision = 15;
+  Catch::StringMaker<P>::precision = 20;
   REQUIRE((diff_norm / max) < (tolerance * std::sqrt(v0.size())));
 }
 
@@ -62,7 +72,7 @@ void compare_vectors(std::vector<P> const &a, std::vector<P> const &b)
   if constexpr (std::is_floating_point<P>::value)
   {
     for (size_t i = 0; i < a.size(); i++)
-      if (a[i] != Approx(b[i]).epsilon(std::numeric_limits<P>::epsilon() * 2))
+      if (a[i] != Catch::Approx(b[i]).epsilon(std::numeric_limits<P>::epsilon() * 2))
         FAIL("" << a[i] << " != " << b[i]);
   }
   else

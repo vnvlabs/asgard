@@ -4,14 +4,18 @@
 #include "tensors.hpp"
 #include "tests_general.hpp"
 
+static auto const coefficients_base_dir = gold_base_dir / "coefficients";
+
 template<typename P>
 void test_coefficients(parser const &parse, std::string const &gold_path,
-                       P const tol_factor = 1e-15, bool const rotate = true)
+                       P const tol_factor = get_tolerance<P>(10),
+                       bool const rotate  = true)
 {
   auto pde = make_PDE<P>(parse);
   options const opts(parse);
   basis::wavelet_transform<P, resource::host> const transformer(opts, *pde);
   P const time = 1.0;
+  generate_dimension_mass_mat(*pde, transformer);
   generate_all_coefficients(*pde, transformer, time, rotate);
 
   auto const lev_string = std::accumulate(
@@ -47,10 +51,9 @@ void test_coefficients(parser const &parse, std::string const &gold_path,
 
 TEMPLATE_TEST_CASE("diffusion 2 (single term)", "[coefficients]", double, float)
 {
-  auto const pde_choice = PDE_opts::diffusion_2;
-  auto const gold_path =
-      "../testing/generated-inputs/coefficients/diffusion2_coefficients";
-  TestType const tol_factor = std::is_same_v<double, TestType> ? 1e-13 : 1e-4;
+  auto const pde_choice     = PDE_opts::diffusion_2;
+  auto const gold_path      = coefficients_base_dir / "diffusion2_coefficients";
+  auto constexpr tol_factor = get_tolerance<TestType>(1000);
 
   SECTION("level 3, degree 5")
   {
@@ -71,10 +74,9 @@ TEMPLATE_TEST_CASE("diffusion 2 (single term)", "[coefficients]", double, float)
 
 TEMPLATE_TEST_CASE("diffusion 1 (single term)", "[coefficients]", double, float)
 {
-  auto const pde_choice = PDE_opts::diffusion_1;
-  auto const gold_path =
-      "../testing/generated-inputs/coefficients/diffusion1_coefficients";
-  TestType const tol_factor = std::is_same_v<double, TestType> ? 1e-12 : 1e-3;
+  auto const pde_choice     = PDE_opts::diffusion_1;
+  auto const gold_path      = coefficients_base_dir / "diffusion1_coefficients";
+  auto constexpr tol_factor = get_tolerance<TestType>(10000);
 
   SECTION("level 5, degree 6")
   {
@@ -89,9 +91,8 @@ TEMPLATE_TEST_CASE("continuity 1 (single term)", "[coefficients]", double,
                    float)
 {
   auto const pde_choice = PDE_opts::continuity_1;
-  auto const gold_path =
-      "../testing/generated-inputs/coefficients/continuity1_coefficients";
-  TestType const tol_factor = std::is_same_v<double, TestType> ? 1e-14 : 1e-4;
+  auto const gold_path  = coefficients_base_dir / "continuity1_coefficients";
+  auto constexpr tol_factor = get_tolerance<TestType>(1000);
 
   SECTION("level 2, degree 2 (default)")
   {
@@ -105,9 +106,8 @@ TEMPLATE_TEST_CASE("continuity 1 (single term)", "[coefficients]", double,
 TEMPLATE_TEST_CASE("continuity 2 terms", "[coefficients]", double, float)
 {
   auto const pde_choice = PDE_opts::continuity_2;
-  auto const gold_path =
-      "../testing/generated-inputs/coefficients/continuity2_coefficients";
-  TestType const tol_factor = std::is_same_v<double, TestType> ? 1e-14 : 1e-6;
+  auto const gold_path  = coefficients_base_dir / "continuity2_coefficients";
+  auto constexpr tol_factor = get_tolerance<TestType>(10);
 
   SECTION("level 4, degree 3")
   {
@@ -128,10 +128,9 @@ TEMPLATE_TEST_CASE("continuity 2 terms", "[coefficients]", double, float)
 
 TEMPLATE_TEST_CASE("continuity 3 terms", "[coefficients]", double, float)
 {
-  auto const gold_path =
-      "../testing/generated-inputs/coefficients/continuity3_coefficients";
-  auto const pde_choice     = PDE_opts::continuity_3;
-  TestType const tol_factor = std::is_same_v<double, TestType> ? 1e-14 : 1e-5;
+  auto const gold_path  = coefficients_base_dir / "continuity3_coefficients";
+  auto const pde_choice = PDE_opts::continuity_3;
+  auto constexpr tol_factor = get_tolerance<TestType>(100);
 
   SECTION("level 4, degree 4")
   {
@@ -152,10 +151,9 @@ TEMPLATE_TEST_CASE("continuity 3 terms", "[coefficients]", double, float)
 
 TEMPLATE_TEST_CASE("continuity 6 terms", "[coefficients]", double, float)
 {
-  auto const gold_path =
-      "../testing/generated-inputs/coefficients/continuity6_coefficients";
-  auto const pde_choice     = PDE_opts::continuity_6;
-  TestType const tol_factor = std::is_same_v<double, TestType> ? 1e-14 : 1e-5;
+  auto const gold_path  = coefficients_base_dir / "continuity6_coefficients";
+  auto const pde_choice = PDE_opts::continuity_6;
+  auto constexpr tol_factor = get_tolerance<TestType>(1000);
 
   SECTION("level 2, degree 4")
   {
@@ -178,10 +176,9 @@ TEMPLATE_TEST_CASE("fokkerplanck1_pitch_E case1 terms", "[coefficients]",
                    double, float)
 {
   auto const pde_choice = PDE_opts::fokkerplanck_1d_pitch_E_case1;
-  auto const gold_path  = "../testing/generated-inputs/coefficients/"
-                         "fokkerplanck1_pitch_E_case1_coefficients";
-  TestType const tol_factor =
-      std::is_same<TestType, double>::value ? 1e-13 : 1e-5;
+  auto const gold_path =
+      coefficients_base_dir / "fokkerplanck1_4p1a_coefficients";
+  auto constexpr tol_factor = get_tolerance<TestType>(10);
 
   SECTION("level 4, degree 3")
   {
@@ -196,10 +193,9 @@ TEMPLATE_TEST_CASE("fokkerplanck1_pitch_E case2 terms", "[coefficients]",
                    double, float)
 {
   auto const pde_choice = PDE_opts::fokkerplanck_1d_pitch_E_case2;
-  auto const gold_path  = "../testing/generated-inputs/coefficients/"
-                         "fokkerplanck1_pitch_E_case2_coefficients";
-  TestType const tol_factor =
-      std::is_same<TestType, double>::value ? 1e-13 : 1e-5;
+  auto const gold_path =
+      coefficients_base_dir / "fokkerplanck1_pitch_E_case2_coefficients";
+  auto constexpr tol_factor = get_tolerance<TestType>(10);
 
   SECTION("level 4, degree 3")
   {
@@ -214,8 +210,8 @@ TEMPLATE_TEST_CASE("fokkerplanck1_pitch_C terms", "[coefficients]", double,
                    float)
 {
   auto const pde_choice = PDE_opts::fokkerplanck_1d_pitch_C;
-  auto const gold_path  = "../testing/generated-inputs/coefficients/"
-                         "fokkerplanck1_pitch_C_coefficients";
+  auto const gold_path =
+      coefficients_base_dir / "fokkerplanck1_4p2_coefficients";
   TestType const tol_factor =
       std::is_same<TestType, double>::value ? 1e-14 : 1e-5;
 
@@ -231,8 +227,8 @@ TEMPLATE_TEST_CASE("fokkerplanck1_pitch_C terms", "[coefficients]", double,
 TEMPLATE_TEST_CASE("fokkerplanck1_4p3 terms", "[coefficients]", double, float)
 {
   auto const pde_choice = PDE_opts::fokkerplanck_1d_4p3;
-  auto const gold_path  = "../testing/generated-inputs/coefficients/"
-                         "fokkerplanck1_4p3_coefficients";
+  auto const gold_path =
+      coefficients_base_dir / "fokkerplanck1_4p3_coefficients";
   TestType const tol_factor =
       std::is_same<TestType, double>::value ? 1e-14 : 1e-4;
 
@@ -248,8 +244,8 @@ TEMPLATE_TEST_CASE("fokkerplanck1_4p3 terms", "[coefficients]", double, float)
 TEMPLATE_TEST_CASE("fokkerplanck1_4p4 terms", "[coefficients]", double, float)
 {
   auto const pde_choice = PDE_opts::fokkerplanck_1d_4p4;
-  auto const gold_path  = "../testing/generated-inputs/coefficients/"
-                         "fokkerplanck1_4p4_coefficients";
+  auto const gold_path =
+      coefficients_base_dir / "fokkerplanck1_4p4_coefficients";
   TestType const tol_factor =
       std::is_same<TestType, double>::value ? 1e-14 : 1e-6;
 
@@ -265,8 +261,8 @@ TEMPLATE_TEST_CASE("fokkerplanck1_4p4 terms", "[coefficients]", double, float)
 TEMPLATE_TEST_CASE("fokkerplanck1_4p5 terms", "[coefficients]", double, float)
 {
   auto const pde_choice = PDE_opts::fokkerplanck_1d_4p5;
-  auto const gold_path  = "../testing/generated-inputs/coefficients/"
-                         "fokkerplanck1_4p5_coefficients";
+  auto const gold_path =
+      coefficients_base_dir / "fokkerplanck1_4p5_coefficients";
   TestType const tol_factor =
       std::is_same<TestType, double>::value ? 1e-14 : 1e-4;
 
@@ -279,13 +275,13 @@ TEMPLATE_TEST_CASE("fokkerplanck1_4p5 terms", "[coefficients]", double, float)
   }
 }
 
-TEMPLATE_TEST_CASE("fokkerplanck2_complete terms", "[coefficients]", double,
-                   float)
+TEMPLATE_TEST_CASE("fokkerplanck2_complete_case4 terms", "[coefficients]",
+                   double, float)
 {
-  auto const gold_path = "../testing/generated-inputs/coefficients/"
-                         "fokkerplanck2_complete_coefficients";
+  auto const gold_path =
+      coefficients_base_dir / "fokkerplanck2_complete_coefficients";
 
-  auto const pde_choice = PDE_opts::fokkerplanck_2d_complete;
+  auto const pde_choice = PDE_opts::fokkerplanck_2d_complete_case4;
   TestType const tol_factor =
       std::is_same<TestType, double>::value ? 1e-12 : 1e-3;
 
@@ -318,5 +314,49 @@ TEMPLATE_TEST_CASE("fokkerplanck2_complete terms", "[coefficients]", double,
     auto const degree = 4;
     parser const test_parse(pde_choice, levels, degree);
     test_coefficients<TestType>(test_parse, gold_path, tol_factor);
+  }
+
+  SECTION("pterm lhs mass")
+  {
+    auto const gold = fk::matrix<TestType>(
+        read_matrix_from_txt_file(std::string(gold_path) + "_lhsmass.dat"));
+
+    auto constexpr tol_factor = get_tolerance<TestType>(100);
+    auto const levels         = fk::vector<int>{4, 4};
+    int const degree          = 4;
+
+    parser const test_parse(pde_choice, levels, degree);
+    auto pde = make_PDE<TestType>(test_parse);
+    options const opts(test_parse);
+
+    basis::wavelet_transform<TestType, resource::host> const transformer(opts,
+                                                                         *pde);
+    TestType const time = 1.0;
+    generate_dimension_mass_mat(*pde, transformer);
+    generate_all_coefficients(*pde, transformer, time, true);
+
+    int row = 0;
+    for (auto i = 0; i < pde->num_dims; ++i)
+    {
+      for (auto j = 0; j < pde->num_terms; ++j)
+      {
+        auto const &term_1D       = pde->get_terms()[j][i];
+        auto const &partial_terms = term_1D.get_partial_terms();
+        for (auto k = 0; k < static_cast<int>(partial_terms.size()); ++k)
+        {
+          int const dof = degree * fm::two_raised_to(levels(i));
+
+          auto const mass =
+              partial_terms[k].get_lhs_mass().extract_submatrix(0, 0, dof, dof);
+
+          fk::matrix<TestType> gold_mass(
+              gold.extract_submatrix(row, 0, dof, dof));
+
+          rmse_comparison(mass, gold_mass, tol_factor);
+
+          row += dof;
+        }
+      }
+    }
   }
 }
