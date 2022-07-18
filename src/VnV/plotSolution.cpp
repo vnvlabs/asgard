@@ -12,7 +12,6 @@ using prec = double;
 using prec = float;
 #endif
 
-
 template<typename T>
 class Solution
 {
@@ -203,7 +202,7 @@ public:
    *    :trace.main: contour
    *    :main.y: {{as_json(time)}}
    *    :main.z: {{as_json(solution)}}
-   *    :layout.title.text: Asgard Solution against time.
+   *    :layout.title.text: Asgard Solution against time NEW.
    *    :layout.yaxis.title.text: time
    *    :layout.xaxis.title.text: index
    * 
@@ -277,11 +276,31 @@ INJECTION_TEST(ASGARD, PlotSolution)
   auto* transformer_ptr = (basis::wavelet_transform<prec, resource::host>*) transformer_raw;
   auto& transformer = *transformer_ptr;
 
+  // convert f_val from wavelet space to realspace for plotting
+  static auto const default_workspace_cpu_MB = 187000;
+  auto const real_space_size                 = real_solution_size(*pde);
+  fk::vector<prec> real_space(real_space_size);
+
+  // temporary workspaces for the transform
+  fk::vector<prec, mem_type::owner, resource::host> workspace(real_space_size * 2);
+  std::array<fk::vector<prec, mem_type::view, resource::host>, 2>
+      tmp_workspace = {
+          fk::vector<prec, mem_type::view, resource::host>(workspace, 0, real_space_size),
+          fk::vector<prec, mem_type::view, resource::host>(workspace, real_space_size, real_space_size * 2 - 1)};
+  // transform initial condition to realspace
+  wavelet_to_realspace<prec>(*pde, f_val, adaptive_grid.get_table(),
+                             transformer, default_workspace_cpu_MB,
+                             tmp_workspace, real_space);
+
+
   // In this example I plot time vs. solution as a contour plot. 
   // We should just switch out the data with what we want.
+  //// if using the first IP, do nothing
   if (type == VnV::InjectionPointType::Begin) {}
+  //// else, plot
   else if (type == VnV::InjectionPointType::Iter)
   {
+    //// append the time value to the time vector
     engine->Put("time", time); // Add the time value to the time vector;
 
     // Does fk::vector gauarantee contiguous storage? -- I guess we will find out.
@@ -292,21 +311,26 @@ INJECTION_TEST(ASGARD, PlotSolution)
     if (pde->num_dims > 1)
     {
       // get solution sizes for each dimension
+      //// iterate through each dim
       std::vector<int> sizes(pde->num_dims);
       for (int i = 0; i < pde->num_dims; i++)
       {
+        //// populate the size of the ith dim with deg*2^lev
         sizes[i] = pde->get_dimensions()[i].get_degree() *
                    fm::two_raised_to(pde->get_dimensions()[i].get_level());
       }
-
-      // fix this to be reused
+      
+      // FIXME resuse this
       Solution<prec> *s = new Solution<prec>();
 
       // get the locations of each table element for each dimension
+      ////? why only 0th dim?
+      ////? because the deg, lev, min, max is the same along each dim?
       auto dim                = pde->get_dimensions()[0];
       std::vector<prec> nodes = s->generate_nodes(
           dim.get_degree(), dim.get_level(), dim.domain_min, dim.domain_max);
-
+      
+      ////? what do the 2nd and 3rd args do?
       engine->Put_Vector("nodes", nodes.size(), nodes.data());
 
       // TODO: check if VnV supports plotly annotations? See below for attempt
@@ -316,27 +340,6 @@ INJECTION_TEST(ASGARD, PlotSolution)
 
       // TODO: how to add X/Y axis labels to subplots? :layout.xaxis.title.text:
       // works for one, but not the other?
-
-      // convert f_val from wavelet space to realspace for plotting
-      static auto const default_workspace_cpu_MB = 187000;
-      auto const real_space_size                 = real_solution_size(*pde);
-      fk::vector<prec> real_space(real_space_size);
-
-      // temporary workspaces for the transform
-      // TODO: pull this out of iteration step, this can be reused each
-      // iteration.
-      fk::vector<prec, mem_type::owner, resource::host> workspace(
-          real_space_size * 2);
-      std::array<fk::vector<prec, mem_type::view, resource::host>, 2>
-          tmp_workspace = {
-              fk::vector<prec, mem_type::view, resource::host>(workspace, 0,
-                                                               real_space_size),
-              fk::vector<prec, mem_type::view, resource::host>(
-                  workspace, real_space_size, real_space_size * 2 - 1)};
-      // transform initial condition to realspace
-      wavelet_to_realspace<prec>(*pde, f_val, adaptive_grid.get_table(),
-                                 transformer, default_workspace_cpu_MB,
-                                 tmp_workspace, real_space);
 
       // convert from fk::vector -> std::vector for vnv
       // auto sol = real_space.to_std();
