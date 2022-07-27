@@ -47,7 +47,7 @@ using prec = float;
  *   "options":{
  *       "ASGARD" : {
  *           "adapt" : true,
- *           "adaptive_threshold" : 0.001,
+ *           "adaptive_threshold" : 0.1,
  *           "max_levels" : 8
  *       }
  *   },
@@ -60,7 +60,8 @@ using prec = float;
  *       "ASGARD:TimeStepping" : {
  *           "tests" : {
  *               "ASGARD:PlotSolution" : {},
- *               "ASGARD:MeshInfo" : {}
+ *               "ASGARD:MeshInfo" : {},
+ *               "ASGARD:PlotError" : {}
  *           }
  *       }
  *    }
@@ -224,39 +225,39 @@ int main(int argc, char **argv)
       },
       opts, cli_input);
 
-  INJECTION_LOOP_ITER(ASGARD, Configuration, Generate PDE);
   // -- generate pde
+  INJECTION_LOOP_ITER(ASGARD, Configuration, Generate PDE);
   auto pde = make_PDE<prec>(cli_input);
 
   // -- set degree (constant since no p-adaptivity)
   auto degree = pde->get_dimensions()[0].get_degree();
 
-  INJECTION_LOOP_ITER(ASGARD, Configuration, Generate Adaptive Grid);
   // -- create forward/reverse mapping between elements and indices,
   // -- along with a distribution plan. this is the adaptive grid.
+  INJECTION_LOOP_ITER(ASGARD, Configuration, Generate Adaptive Grid);
   adapt::distributed_grid adaptive_grid(*pde, opts);
 
-  INJECTION_LOOP_ITER(ASGARD, Configuration, Generate Basis Operator);
   // -- generate basis operator
+  INJECTION_LOOP_ITER(ASGARD, Configuration, Generate Basis Operator);
   auto const quiet = false;
   basis::wavelet_transform<prec, resource::host> const transformer(opts, *pde, quiet);
  
-  INJECTION_LOOP_ITER(ASGARD, Configuration, Generate Mass Matrices);
   // -- generate and store the mass matrices for each dimension
+  INJECTION_LOOP_ITER(ASGARD, Configuration, Generate Mass Matrices);
   generate_dimension_mass_mat<prec>(*pde, transformer);
   
-  INJECTION_LOOP_ITER(ASGARD, Configuration, Generate IC Vector);
   // -- generate initial condition vector
+  INJECTION_LOOP_ITER(ASGARD, Configuration, Generate IC Vector);
   auto const initial_condition = adaptive_grid.get_initial_condition(*pde, transformer, opts);
   //degrees of freedom (post initial adapt)
   //adaptive_grid.size() * static_cast<uint64_t>(std::pow(degree, pde->num_dims))
 
-  INJECTION_LOOP_ITER(ASGARD, Configuration, Regenerate Mass Matrices);
   // -- regen mass mats after init conditions - TODO: check dims/rechaining?
+  INJECTION_LOOP_ITER(ASGARD, Configuration, Regenerate Mass Matrices);
   generate_dimension_mass_mat<prec>(*pde, transformer);
 
-  INJECTION_LOOP_ITER(ASGARD, Configuration, Generate Coeff Matrix);
   // -- generate and store coefficient matrices.
+  INJECTION_LOOP_ITER(ASGARD, Configuration, Generate Coeff Matrix);
   generate_all_coefficients<prec>(*pde, transformer);
 
   // this is to bail out for further profiling/development on the setup routines
@@ -308,7 +309,7 @@ int main(int argc, char **argv)
   
   for (auto i = 0; i < opts.num_time_steps; ++i)
   {
-    // take a time advance step
+    // -- take a time advance step
     time = (i + 1) * pde->get_dt();
     //FIXME provide updated adaptive_grid, pde, f_val, and transformer to avoid error with plotting in --adapt
 
@@ -351,7 +352,7 @@ int main(int argc, char **argv)
     }
     else
     {
-      node_out() << "No analytic solution found." << '\n';
+      // -- no analytic solution found
     }
 
     INJECTION_LOOP_ITER_D(ASGARD, TimeStepping, "TS " + std::to_string(i));
@@ -371,4 +372,3 @@ int main(int argc, char **argv)
 
   return 0;
 }
-
