@@ -1,10 +1,8 @@
-template<typename T>
 class Solution
 {
   std::vector<std::vector<T>> nodes_;
   std::vector<size_t> sol_sizes_;
   std::vector<std::vector<T>> elem_coords_;
-
   /* The next few functions are adapted from matlab_plot.cpp. */
 
 public:
@@ -175,6 +173,12 @@ public:
     }
     int c = a->second++;
     return stage + "_" + std::to_string(c);
+  }
+
+  void put_to_vnv(PDE<T> const &pde) const {
+    for (int d=0; d < pde.num_dims; d++) {
+      Put_Vector("elem_coords"+std::to_string(d), elem_coords_.at(d);
+    }
   }
 };
 
