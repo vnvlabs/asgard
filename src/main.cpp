@@ -125,7 +125,7 @@ INJECTION_OPTIONS(ASGARD, R"(
        "poisson" : {"type" : "boolean" , "default" : false,  "description" : "Use Poisson?"},
        "implicit" : {"type" : "boolean" , "default" : false, "description" : "Use an implicit time stepping algorithm?" }}
   }
-  )")
+  )", AsgardOptions)
 {
   return new AsgardOptions(config);
 }
