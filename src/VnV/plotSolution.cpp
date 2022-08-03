@@ -48,6 +48,12 @@ using prec = float;
    *    :layout.yaxis.title.text: y
    *    :layout.xaxis.title.text: x
    *
+   * .. vnv-animation::
+   *    :trace.sol: contour
+   *    :layout.title.text: 2D Solution
+   *    :values: {{solution_mat}}
+   *    :sol.z: ${i}
+   *
    * .. vnv-plotly::
    *    :trace.col: scatter
    *    :trace.row: scatter
