@@ -14,7 +14,7 @@ using prec = float;
 
 #include "./solution.hpp"
 
-/** @title PLOT SOLUTION Contour Plot Of the Solution 
+/** @title SOLUTION
    *
    * In this contour plot the x axis is the solution. The y 
    * axis is the time. So, this is a contour plot of the 1D 
@@ -27,6 +27,8 @@ using prec = float;
    *    :layout.title.text: Asgard Solution against time.
    *    :layout.yaxis.title.text: time
    *    :layout.xaxis.title.text: index
+   * 
+   * =======================================================
    *
    * .. vnv-plotly::
    *    :trace.col: contour
@@ -47,12 +49,6 @@ using prec = float;
    *    :layout.title.text: Asgard Solution (t={{time[-1]}}) vs Initial Solution (t=0).
    *    :layout.yaxis.title.text: y
    *    :layout.xaxis.title.text: x
-   *
-   * .. vnv-animation::
-   *    :trace.sol: contour
-   *    :layout.title.text: 2D Solution
-   *    :values: {{solution_mat}}
-   *    :sol.z: ${i}
    *
    * .. vnv-plotly::
    *    :trace.col: scatter
@@ -89,7 +85,15 @@ using prec = float;
    *    :layout.grid.pattern: independent
    *    :layout.title.text: 1D Solution Slices over time.
    *    :layout.yaxis.title.text: time
-   *   
+   *
+   * .. vnv-animation::
+   *    :trace.sol: contour
+   *    :layout.title.text: 2D Solution
+   *    :values: {{solution_mat}}
+   *    :sol.x: {{nodes[0]}}
+   *    :sol.y: {{nodes[0]}}
+   *    :sol.z: ${i}   
+   *
    **/ 
 INJECTION_TEST(ASGARD, PlotSolution)
 {
@@ -173,19 +177,9 @@ INJECTION_TEST(ASGARD, PlotSolution)
       // TODO: this duplicates the solution but passes as a matrix to make the
       // contour plots. using the "vector" form does not seem to make the same
       // plot
-      engine->Put_Matrix("solution_mat", sizes[0], sizes[1], real_space.data(), sizes[1]);
-      
-      // std::vector<prec> custom = real_space.to_std();
-      // while (custom.size() != 1024) {
-      //  if (custom.size() < 1024) {
-      //          custom.push_back(0.0);
-      //  }
-      //  else {
-      //          custom.pop_back();
-      //  }
-      //}
-      //engine->Put_Vector("solution"+std::to_string(time), custom);
-      engine->Put_Vector("solution"+std::to_string(time), sizes[0]*sizes[1], real_space.data());
+      engine->Put_Matrix("solution_mat", sizes[0], sizes[1], real_space.data(), sizes[1]);    
+ engine->Put_Vector("solution", sizes[0]*sizes[1], real_space.data());
+     
       // for plotting 1d slices
       // TODO: should this reuse the above solution without saving more data to
       // the report?
@@ -201,8 +195,8 @@ INJECTION_TEST(ASGARD, PlotSolution)
        auto row_slice = mat.extract_submatrix(row, 0, 1, mat.ncols());
        auto col_slice = mat.extract_submatrix(0, col, mat.nrows(), 1);
 
-       engine->Put_Vector("row"+std::to_string(time), row_slice.size(), row_slice.data());
-       engine->Put_Vector("col"+std::to_string(time), col_slice.size(), col_slice.data());
+       engine->Put_Vector("row", row_slice.size(), row_slice.data());
+       engine->Put_Vector("col", col_slice.size(), col_slice.data());
     }
     else
     {
@@ -213,3 +207,4 @@ INJECTION_TEST(ASGARD, PlotSolution)
 }
 
 #endif
+
