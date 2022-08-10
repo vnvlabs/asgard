@@ -132,7 +132,7 @@ using prec = float;
    * ::
    * 
    *    How to read these data:
-   *            These plots are slices of the *1D Solutions vs. Time* plots.
+   *            These plots are slices of the 1D Solutions vs. Time plots.
    *            The plot on the left is a slice of the solution incorporating 
    *            various columns on a single row at the first instance of time.
    *            Similarly, the plot on the right is a slice of the solution incorporating 
@@ -166,7 +166,7 @@ using prec = float;
    *
    *    How to read these data:
    *            This plot animates the PDE dynamics over time.
-   *            Click the *Play* button to start the animation.
+   *            Click the Play button to start the animation.
    *            Dragging the slider to the very left will set the time to the initial time, 
    *            and dragging it to the right will bring the simulation to a later time.
    *
