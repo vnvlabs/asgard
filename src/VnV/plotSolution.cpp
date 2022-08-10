@@ -14,11 +14,23 @@ using prec = float;
 
 #include "./solution.hpp"
 
-/** @title SOLUTION
+/** @title Plots of PDE Solution
+   * 
+   * -----------------------------------------
    *
-   * In this contour plot the x axis is the solution. The y 
-   * axis is the time. So, this is a contour plot of the 1D 
-   * solution against time. 
+   * =========================================
+   * Countour plot of the 1D solution vs. time
+   * =========================================
+   * 
+   * ::
+   *
+   *    How to read these data:
+   *            This contour plot creates a row of solutions for each instance of time.
+   *            The solution at the first instance of time is the bottomost row, 
+   *            the subsequent solution at the next instance of time is the row 2nd from the bottom, and so on.
+   *            This continues until the uppermost row is reached, where this row 
+   *            corresponds to the solution of the PDE at the final instance of time.
+   *            These rows are created by flattening the 2D solution into a 1D vector.
    *
    * .. vnv-plotly::
    *    :trace.main: contour
@@ -26,9 +38,21 @@ using prec = float;
    *    :main.z: {{as_json(solution)}}
    *    :layout.title.text: Asgard Solution against time.
    *    :layout.yaxis.title.text: time
-   *    :layout.xaxis.title.text: index
+   *    :layout.xaxis.title.text: solution index
    * 
-   * =======================================================
+   * -----------------------------------------
+   *
+   * ================================================
+   * Snapshots of the contour plot of the 2D solution
+   * ================================================
+   * 
+   * ::
+   * 
+   *    How to read these data:
+   *            These 2 plots display the solution to the 2D continuity equation at different instances of time.
+   *            The plot on the left shows the solution at the end of the simulation.
+   *            On the other hand, the plot on the right 
+   *            shows the solution at the beginning of the simulation, which is at t=0.
    *
    * .. vnv-plotly::
    *    :trace.col: contour
@@ -50,22 +74,29 @@ using prec = float;
    *    :layout.yaxis.title.text: y
    *    :layout.xaxis.title.text: x
    *
-   * .. vnv-plotly::
-   *    :trace.col: scatter
-   *    :trace.row: scatter
-   *    :col.x: {{as_json(nodes[-1])}}
-   *    :col.y: {{as_json(col[-1])}}
-   *    :row.x: {{as_json(nodes[-1])}}
-   *    :row.y: {{as_json(row[-1])}}
-   *    :row.yaxis: y2
-   *    :row.xaxis: x2
-   *    :row.name: Horizontal
-   *    :col.name: Vertical
-   *    :layout.grid.rows: 1
-   *    :layout.grid.columns: 2
-   *    :layout.grid.pattern: independent
-   *    :layout.title.text: 1D Solution Slices (t={{time[-1]}})
-   *    :layout.xaxis.title.text: y
+   *
+   * -----------------------------------------
+   *
+   * ===========================================
+   * Countour plots of the 1D solutions vs. time 
+   * ===========================================
+   *
+   * ::
+   * 
+   *    How to read these data:
+   *            These plots show how the solution located within a 1D line segment 
+   *            from the full 2D solution changes over time.
+   *            To help visualize this, imagine that you have a pencil and 
+   *            want to draw a straight line across the solution this PDE at the initial point in time.
+   *            The following two plots show two ways that you can draw a line with the pencil: 
+   *            you can create a horizontal line that incorporates various columns on a single row, 
+   *            or you can create a vertical line that incorporates various rows on a single column.
+   *            These plots do exactly that, where the plot on the left shows how the solution 
+   *            located at a line through columns starting at (x,y)=(-0.8943376,0.6056624) 
+   *            and ending at (x,y)=(0.8943376,0.6056624) evolves over time.
+   *            Likewise, the plot on the right shows how the solution 
+   *            located at a line through rows starting at (x,y)=(0.6056624,-0.8943376) 
+   *            and ending at (x,y)=(0.6056624,-0.8943376) evolves over time.
    *
    * .. vnv-plotly::
    *    :trace.col: contour
@@ -86,13 +117,64 @@ using prec = float;
    *    :layout.title.text: 1D Solution Slices over time.
    *    :layout.yaxis.title.text: time
    *
+   * -----------------------------------------
+   *
+   * ======================================
+   * Scatter plots of the final 1D solution
+   * ======================================
+   *
+   * ::
+   * 
+   *    How to read these data:
+   *            These plots are slices of the *1D Solutions vs. Time* plots.
+   *            The plot on the left is a slice of the solution incorporating 
+   *            various columns on a single row at the first instance of time.
+   *            Similarly, the plot on the right is a slice of the solution incorporating 
+   *            various rows on a single column at the first instance of time.
+   *
+   * .. vnv-plotly::
+   *    :trace.col: scatter
+   *    :trace.row: scatter
+   *    :col.x: {{as_json(nodes[-1])}}
+   *    :col.y: {{as_json(col[-1])}}
+   *    :row.x: {{as_json(nodes[-1])}}
+   *    :row.y: {{as_json(row[-1])}}
+   *    :row.yaxis: y2
+   *    :row.xaxis: x2
+   *    :row.name: Horizontal
+   *    :col.name: Vertical
+   *    :layout.grid.rows: 1
+   *    :layout.grid.columns: 2
+   *    :layout.grid.pattern: independent
+   *    :layout.title.text: 1D Solution Slices (t={{time[-1]}})
+   *    :layout.xaxis.title.text: y
+   *
+   *
+   * -----------------------------------------
+   *
+   * ======================================
+   * Animation of the 2D solution over time
+   * ======================================
+   *
+   * ::
+   *
+   *    How to read these data:
+   *            This plot animates the PDE dynamics over time.
+   *            Click the *Play* button to start the animation.
+   *            Dragging the slider to the very left will set the time to the initial time, 
+   *            and dragging it to the right will bring the simulation to a later time.
+   *
    * .. vnv-animation::
    *    :trace.sol: contour
    *    :layout.title.text: 2D Solution
    *    :values: {{solution_mat}}
    *    :sol.x: {{nodes[0]}}
    *    :sol.y: {{nodes[0]}}
-   *    :sol.z: ${i}   
+   *    :sol.z: ${i}
+   *    :layout.xaxis.title.text: x
+   *    :layout.yaxis.title.text: y
+   *
+   * -----------------------------------------
    *
    **/ 
 INJECTION_TEST(ASGARD, PlotSolution)
@@ -177,8 +259,8 @@ INJECTION_TEST(ASGARD, PlotSolution)
       // TODO: this duplicates the solution but passes as a matrix to make the
       // contour plots. using the "vector" form does not seem to make the same
       // plot
-      engine->Put_Matrix("solution_mat", sizes[0], sizes[1], real_space.data(), sizes[1]);    
- engine->Put_Vector("solution", sizes[0]*sizes[1], real_space.data());
+      engine->Put_Matrix("solution_mat", sizes[0], sizes[1], real_space.data(), sizes[1]);   
+      engine->Put_Vector("solution", sizes[0]*sizes[1], real_space.data());
      
       // for plotting 1d slices
       // TODO: should this reuse the above solution without saving more data to
