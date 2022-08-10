@@ -46,6 +46,9 @@ using prec = float;
    * Snapshots of the contour plot of the 2D solution
    * ================================================
    * 
+   * ..
+   * 	TODO un-hardcode time values (i.e., replace t=0 with something like t={{time[0]}})
+   *
    * ::
    * 
    *    How to read these data:
@@ -80,7 +83,10 @@ using prec = float;
    * ===========================================
    * Countour plots of the 1D solutions vs. time 
    * ===========================================
-   *
+   * 
+   * ..
+   * 	TODO un-hardcode (x,y) coordinates
+   * 
    * ::
    * 
    *    How to read these data:
@@ -163,6 +169,10 @@ using prec = float;
    *            Click the *Play* button to start the animation.
    *            Dragging the slider to the very left will set the time to the initial time, 
    *            and dragging it to the right will bring the simulation to a later time.
+   *
+   * ..
+   * 	TODO remove numbers that are oddly displayed near the animation slider
+   * 	TODO figure out where those numbers come from and what they mean
    *
    * .. vnv-animation::
    *    :trace.sol: contour
