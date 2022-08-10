@@ -1,3 +1,4 @@
+template<typename T>
 class Solution
 {
   std::vector<std::vector<T>> nodes_;
@@ -175,10 +176,10 @@ public:
     return stage + "_" + std::to_string(c);
   }
 
-  void put_to_vnv(PDE<T> const &pde) const {
-    for (int d=0; d < pde.num_dims; d++) {
-      Put_Vector("elem_coords"+std::to_string(d), elem_coords_.at(d);
-    }
-  }
+//  void put_to_vnv(PDE<T> const &pde) const {
+//    for (int d=0; d < pde.num_dims; d++) {
+//      Put_Vector("elem_coords"+std::to_string(d), elem_coords_.at(d));
+//    }
+//  }
 };
 
