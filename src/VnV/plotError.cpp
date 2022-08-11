@@ -13,10 +13,18 @@ using prec = float;
 #endif
 
 /**
- * @title Asgard Time-Stepping Data
+ * @title Plots of Solution Error
  *
- * This is the main time-stepping loop in the ASGarD executable. The loop
- * will execute :vnv:`nts[0]` time steps.
+ * -----------------------------------------
+ * 
+ * ===============================================================
+ * Scatter Plots of the Number of Elements and Time Steps Over Time
+ * ===============================================================
+ *
+ * ::
+ *
+ *      How to read these data:
+ *              TODO
  *
  * .. vnv-plotly::
  *     :trace.time: scatter
@@ -30,8 +38,18 @@ using prec = float;
  *     :layout.grid.pattern: independent
  *     :layout.title.text: Elements and Time
  *
+ * -----------------------------------------
  *
  * .. vnv-if:: analytic
+ *   
+ *   ======================================
+ *   Scatter Plot of Root Mean Square Error
+ *   ======================================
+ *
+ *   ::
+ *
+ *      How to read these data:
+ *              TODO
  *
  *   .. vnv-plotly::
  *       :trace.rmse: scatter
@@ -44,6 +62,9 @@ using prec = float;
  *       :layout.grid.columns: 2
  *       :layout.grid.pattern: independent
  *       :layout.title.text: Root Mean Square Error
+ *
+ *       -----------------------------------------
+ *
  **/
 INJECTION_TEST(ASGARD, PlotError)
 {
@@ -105,3 +126,4 @@ INJECTION_TEST(ASGARD, PlotError)
 }
 
 #endif
+
