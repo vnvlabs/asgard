@@ -66,12 +66,12 @@ INJECTION_TEST(ASGARD, PlotError)
 
   if (type == VnV::InjectionPointType::Begin)
   {
-    engine->Put("nts", opts.num_time_steps);
-    engine->Put("analytic", pde->has_analytic_soln);
+   engine->Put("nts", opts.num_time_steps);
+   engine->Put("analytic", pde->has_analytic_soln);
   }
   else if (type == VnV::InjectionPointType::Iter)
   {
-    engine->Put("time", time);
+   engine->Put("time", time);
 
     // print root mean squared error from analytic solution
     if (pde->has_analytic_soln)
@@ -97,8 +97,8 @@ INJECTION_TEST(ASGARD, PlotError)
       // Only writes rank 0 result for now -- Change to Put_Rank to
       // write values for
       // all ranks into a rank indexed vector.
-      engine->Put("rmse", RMSE);
-      engine->Put("rel", RMSE / inf_norm(analytic_solution) * 100);
+     engine->Put("rmse", RMSE);
+     engine->Put("rel", RMSE / inf_norm(analytic_solution) * 100);
     }
   }
   return SUCCESS;

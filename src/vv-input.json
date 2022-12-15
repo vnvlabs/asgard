@@ -5,12 +5,13 @@
     }
   },
   "injectionPoints": {
-	"ASGARD:TimeStepping" : {
-		"tests" : { 
-			"ASGARD:PlotError" : {}, 
-	       		"ASGARD:PlotSolution" : {}
-		}
-	}
+        "ASGARD:TimeStepping" : {
+                "tests" : { 
+                        "ASGARD:MeshInfo" : {}, 
+                        "ASGARD:PlotSolution" : {},
+                        "ASGARD:PlotError" : {}
+                }
+        }
   }
 
 }  

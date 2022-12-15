@@ -12,192 +12,25 @@ using prec = double;
 using prec = float;
 #endif
 
+#include "./solution.hpp"
 
-template<typename T>
-class Solution
-{
-  std::vector<std::vector<T>> nodes_;
-  std::vector<size_t> sol_sizes_;
-  std::vector<std::vector<T>> elem_coords_;
-
-  /* The next few functions are adapted from matlab_plot.cpp. */
-
-public:
-  std::vector<T>
-  generate_nodes(int const degree, int const level, T const min, T const max)
-  {
-    // Trimmed version of matrix_plot_D.m to get only the nodes
-    int const n        = pow(2, level);
-    int const mat_dims = degree * n;
-    T const h          = (max - min) / n;
-
-    // TODO: fully implement the output_grid options from matlab (this is just
-    // the 'else' case)
-    auto const lgwt  = legendre_weights(degree, -1.0, 1.0, true);
-    auto const roots = lgwt[0];
-
-    unsigned int const dof = roots.size();
-
-    auto nodes = std::vector<T>(mat_dims);
-
-    for (int i = 0; i < n; i++)
-    {
-      auto p_val = legendre(roots, degree, legendre_normalization::lin);
-
-      p_val[0] = p_val[0] * sqrt(1.0 / h);
-
-      std::vector<T> xi(dof);
-      for (std::size_t j = 0; j < dof; j++)
-      {
-        xi[j] = (0.5 * (roots(j) + 1.0) + i) * h + min;
-      }
-
-      std::vector<int> Iu(degree);
-      for (int j = 0, je = degree - 1; j < je; j++)
-      {
-        Iu[j] = dof * i + j + 1;
-      }
-      Iu[degree - 1] = dof * (i + 1);
-
-      for (std::size_t j = 0; j < dof; j++)
-      {
-        nodes[Iu[j] - 1] = xi[j];
-      }
-    }
-
-    return nodes;
-  }
-
-  std::vector<std::vector<T>>
-  gen_elem_coords(PDE<T> const &pde, elements::table const &table)
-  {
-    int const ndims = pde.num_dims;
-
-    auto elem_coords = std::vector<std::vector<T>>(ndims);
-
-    // Iterate over dimensions first since matlab needs col-major order
-    for (int d = 0; d < ndims; d++)
-    {
-      elem_coords[d] = std::vector<T>(table.size());
-
-      T const max = pde.get_dimensions()[d].domain_max;
-      T const min = pde.get_dimensions()[d].domain_min;
-      T const rng = max - min;
-
-      for (int i = 0; i < table.size(); i++)
-      {
-        fk::vector<int> const &coords = table.get_coords(i);
-
-        int const lev = coords(d);
-        int const pos = coords(ndims + d);
-
-        expect(lev >= 0);
-        expect(pos >= 0);
-
-        T x0;
-        if (lev > 1)
-        {
-          T const s = pow(2, lev - 1) - 1.0;
-          T const h = 1.0 / (pow(2, lev - 1));
-          T const w = 1.0 - h;
-          T const o = 0.5 * h;
-
-          x0 = pos / s * w + o;
-        }
-        else
-        {
-          x0 = pos + 0.5;
-        }
-
-        T const x = x0 * rng + min;
-
-        elem_coords[d][i] = x;
-      }
-    }
-
-    return elem_coords;
-  }
-
-  inline std::vector<size_t> get_soln_sizes(PDE<T> const &pde)
-  {
-    // Returns a vector of the solution size for each dimension
-    std::vector<size_t> sizes(pde.num_dims);
-    for (int i = 0; i < pde.num_dims; i++)
-    {
-      sizes[i] = pde.get_dimensions()[i].get_degree() *
-                 std::pow(2, pde.get_dimensions()[i].get_level());
-    }
-    return sizes;
-  }
-
-  void init_plotting(PDE<T> const &pde, elements::table const &table)
-  {
-    VnV_Info(ASGARD, "Initializing plotting");
-
-    // Generates cell array of nodes and element coordinates needed for plotting
-    sol_sizes_ = get_soln_sizes(pde);
-
-    nodes_          = std::vector<std::vector<T>>(pde.num_dims);
-    auto const dims = pde.get_dimensions();
-
-    for (int i = 0; i < pde.num_dims; i++)
-    {
-      auto const &dim       = dims[i];
-      auto const &node_list = generate_nodes(dim.get_degree(), dim.get_level(),
-                                             dim.domain_min, dim.domain_max);
-      nodes_[i]             = node_list;
-    }
-
-    elem_coords_ = gen_elem_coords(pde, table);
-
-    VnV_Info(ASGARD, "Initialized plotting");
-  }
-
-  void plot_fval(PDE<T> const &pde, elements::table const &table,
-                 fk::vector<T> const &f_val, fk::vector<T> const &analytic_soln)
-  {
-    expect(sol_sizes_.size() > 0);
-
-    size_t const ndims = static_cast<size_t>(pde.num_dims);
-
-    if (ndims != elem_coords_.size() || table.size() != elem_coords_[0].size())
-    {
-      // Regenerate the element coordinates and nodes if the grid was adapted
-      init_plotting(pde, table);
-    }
-
-    /**
-     * Now to plot using:
-     *
-     * analytic_soln
-     * ndims
-     * nodes_
-     * sol_sizes_
-     * f_val
-     * elem_coords_
-     */
-  }
-
-  std::map<std::string, int> count;
-
-  std::string getStageId(std::string stage)
-  {
-    auto a = count.find(stage);
-    if (a == count.end())
-    {
-      count[stage] = 0;
-      return stage;
-    }
-    int c = a->second++;
-    return stage + "_" + std::to_string(c);
-  }
-};
-
-/** @title Contour Plot Of the Solution 
+/** @title Plots of PDE Solution
+   * 
+   * -----------------------------------------
    *
-   * In this contour plot the x axis is the solution. The y 
-   * axis is the time. So, this is a contour plot of the 1D 
-   * solution against time. 
+   * =========================================
+   * Countour plot of the 1D solution vs. time
+   * =========================================
+   * 
+   * ::
+   *
+   *    How to read these data:
+   *            This contour plot creates a row of solutions for each instance of time.
+   *            The solution at the first instance of time is the bottomost row, 
+   *            the subsequent solution at the next instance of time is the row 2nd from the bottom, and so on.
+   *            This continues until the uppermost row is reached, where this row 
+   *            corresponds to the solution of the PDE at the final instance of time.
+   *            These rows are created by flattening the 2D solution into a 1D vector.
    *
    * .. vnv-plotly::
    *    :trace.main: contour
@@ -205,8 +38,25 @@ public:
    *    :main.z: {{as_json(solution)}}
    *    :layout.title.text: Asgard Solution against time.
    *    :layout.yaxis.title.text: time
-   *    :layout.xaxis.title.text: index
+   *    :layout.xaxis.title.text: solution index
    * 
+   * -----------------------------------------
+   *
+   * ================================================
+   * Snapshots of the contour plot of the 2D solution
+   * ================================================
+   * 
+   * ..
+   * 	TODO un-hardcode time values (i.e., replace t=0 with something like t={{time[0]}})
+   *
+   * ::
+   * 
+   *    How to read these data:
+   *            These 2 plots display the solution to the 2D continuity equation at different instances of time.
+   *            The plot on the left shows the solution at the end of the simulation.
+   *            On the other hand, the plot on the right 
+   *            shows the solution at the beginning of the simulation, which is at t=0.
+   *
    * .. vnv-plotly::
    *    :trace.col: contour
    *    :trace.row: contour
@@ -227,22 +77,32 @@ public:
    *    :layout.yaxis.title.text: y
    *    :layout.xaxis.title.text: x
    *
-   * .. vnv-plotly::
-   *    :trace.col: scatter
-   *    :trace.row: scatter
-   *    :col.x: {{as_json(nodes[-1])}}
-   *    :col.y: {{as_json(col[-1])}}
-   *    :row.x: {{as_json(nodes[-1])}}
-   *    :row.y: {{as_json(row[-1])}}
-   *    :row.yaxis: y2
-   *    :row.xaxis: x2
-   *    :row.name: Horizontal
-   *    :col.name: Vertical
-   *    :layout.grid.rows: 1
-   *    :layout.grid.columns: 2
-   *    :layout.grid.pattern: independent
-   *    :layout.title.text: 1D Solution Slices (t={{time[-1]}})
-   *    :layout.xaxis.title.text: y
+   *
+   * -----------------------------------------
+   *
+   * ===========================================
+   * Countour plots of the 1D solutions vs. time 
+   * ===========================================
+   * 
+   * ..
+   * 	TODO un-hardcode (x,y) coordinates
+   * 
+   * ::
+   * 
+   *    How to read these data:
+   *            These plots show how the solution located within a 1D line segment 
+   *            from the full 2D solution changes over time.
+   *            To help visualize this, imagine that you have a pencil and 
+   *            want to draw a straight line across the solution this PDE at the initial point in time.
+   *            The following two plots show two ways that you can draw a line with the pencil: 
+   *            you can create a horizontal line that incorporates various columns on a single row, 
+   *            or you can create a vertical line that incorporates various rows on a single column.
+   *            These plots do exactly that, where the plot on the left shows how the solution 
+   *            located at a line through columns starting at (x,y)=(-0.8943376,0.6056624) 
+   *            and ending at (x,y)=(0.8943376,0.6056624) evolves over time.
+   *            Likewise, the plot on the right shows how the solution 
+   *            located at a line through rows starting at (x,y)=(0.6056624,-0.8943376) 
+   *            and ending at (x,y)=(0.6056624,-0.8943376) evolves over time.
    *
    * .. vnv-plotly::
    *    :trace.col: contour
@@ -262,7 +122,71 @@ public:
    *    :layout.grid.pattern: independent
    *    :layout.title.text: 1D Solution Slices over time.
    *    :layout.yaxis.title.text: time
-**/ 
+   *
+   * -----------------------------------------
+   *
+   * ======================================
+   * Scatter plots of the final 1D solution
+   * ======================================
+   *
+   * ::
+   * 
+   *    How to read these data:
+   *            These plots are slices of the 1D Solutions vs. Time plots.
+   *            The plot on the left is a slice of the solution incorporating 
+   *            various columns on a single row at the first instance of time.
+   *            Similarly, the plot on the right is a slice of the solution incorporating 
+   *            various rows on a single column at the first instance of time.
+   *
+   * .. vnv-plotly::
+   *    :trace.col: scatter
+   *    :trace.row: scatter
+   *    :col.x: {{as_json(nodes[-1])}}
+   *    :col.y: {{as_json(col[-1])}}
+   *    :row.x: {{as_json(nodes[-1])}}
+   *    :row.y: {{as_json(row[-1])}}
+   *    :row.yaxis: y2
+   *    :row.xaxis: x2
+   *    :row.name: Horizontal
+   *    :col.name: Vertical
+   *    :layout.grid.rows: 1
+   *    :layout.grid.columns: 2
+   *    :layout.grid.pattern: independent
+   *    :layout.title.text: 1D Solution Slices (t={{time[-1]}})
+   *    :layout.xaxis.title.text: y
+   *
+   *
+   * -----------------------------------------
+   *
+   * ======================================
+   * Animation of the 2D solution over time
+   * ======================================
+   *
+   * ::
+   *
+   *    How to read these data:
+   *            This plot animates the PDE dynamics over time.
+   *            Click the Play button to start the animation.
+   *            Dragging the slider to the very left will set the time to the initial time, 
+   *            and dragging it to the right will bring the simulation to a later time.
+   *
+   * ..
+   * 	TODO remove numbers that are oddly displayed near the animation slider
+   * 	TODO figure out where those numbers come from and what they mean
+   *
+   * .. vnv-animation::
+   *    :trace.sol: contour
+   *    :layout.title.text: 2D Solution
+   *    :values: {{solution_mat}}
+   *    :sol.x: {{nodes[0]}}
+   *    :sol.y: {{nodes[0]}}
+   *    :sol.z: ${i}
+   *    :layout.xaxis.title.text: x
+   *    :layout.yaxis.title.text: y
+   *
+   * -----------------------------------------
+   *
+   **/ 
 INJECTION_TEST(ASGARD, PlotSolution)
 {
   // Can't use T for type parameter in these two GetRef conversions.
@@ -282,7 +206,7 @@ INJECTION_TEST(ASGARD, PlotSolution)
   if (type == VnV::InjectionPointType::Begin) {}
   else if (type == VnV::InjectionPointType::Iter)
   {
-    engine->Put("time", time); // Add the time value to the time vector;
+   engine->Put("time", time); // Add the time value to the time vector;
 
     // Does fk::vector gauarantee contiguous storage? -- I guess we will find out.
     // This adds a new "vector" to the solution vector. After "X" timesteps we have
@@ -307,7 +231,7 @@ INJECTION_TEST(ASGARD, PlotSolution)
       std::vector<prec> nodes = s->generate_nodes(
           dim.get_degree(), dim.get_level(), dim.domain_min, dim.domain_max);
 
-      engine->Put_Vector("nodes", nodes.size(), nodes.data());
+     engine->Put_Vector("nodes", nodes.size(), nodes.data());
 
       // TODO: check if VnV supports plotly annotations? See below for attempt
       // at adding subplot titles:
@@ -319,7 +243,8 @@ INJECTION_TEST(ASGARD, PlotSolution)
 
       // convert f_val from wavelet space to realspace for plotting
       static auto const default_workspace_cpu_MB = 187000;
-      auto const real_space_size                 = real_solution_size(*pde);
+      //auto const real_space_size                 = real_solution_size(*pde);
+      auto const real_space_size = 1024;
       fk::vector<prec> real_space(real_space_size);
 
       // temporary workspaces for the transform
@@ -344,34 +269,34 @@ INJECTION_TEST(ASGARD, PlotSolution)
       // TODO: this duplicates the solution but passes as a matrix to make the
       // contour plots. using the "vector" form does not seem to make the same
       // plot
-      engine->Put_Matrix("solution_mat", sizes[0], sizes[1], real_space.data(),
-                         sizes[1]);
-      engine->Put_Vector("solution", sizes[0] * sizes[1], real_space.data());
-
+     engine->Put_Matrix("solution_mat", sizes[0], sizes[1], real_space.data(), sizes[1]);   
+     engine->Put_Vector("solution", sizes[0]*sizes[1], real_space.data());
+     
       // for plotting 1d slices
       // TODO: should this reuse the above solution without saving more data to
       // the report?
 
-      // interpret the real space solution as a matrix
-      auto mat = fk::matrix<prec, mem_type::view, resource::host>(
-          real_space, sizes[0], sizes[1]);
+       // interpret the real space solution as a matrix
+       auto mat = fk::matrix<prec, mem_type::view, resource::host>(
+           real_space, sizes[0], sizes[1]);
 
-      // get indices for 1D horizontal/vertical slices
-      int col = std::max(1, (int)std::floor((mat.ncols() / 2)) + 2);
-      int row = std::max(1, (int)std::floor((mat.nrows() / 2)) + 2);
+       // get indices for 1D horizontal/vertical slices
+       int col = std::max(1, (int)std::floor((mat.ncols() / 2)) + 2);
+       int row = std::max(1, (int)std::floor((mat.nrows() / 2)) + 2);
 
-      auto row_slice = mat.extract_submatrix(row, 0, 1, mat.ncols());
-      auto col_slice = mat.extract_submatrix(0, col, mat.nrows(), 1);
+       auto row_slice = mat.extract_submatrix(row, 0, 1, mat.ncols());
+       auto col_slice = mat.extract_submatrix(0, col, mat.nrows(), 1);
 
       engine->Put_Vector("row", row_slice.size(), row_slice.data());
       engine->Put_Vector("col", col_slice.size(), col_slice.data());
     }
     else
     {
-      engine->Put_Vector("solution", f_val.size(), f_val.data());
+     engine->Put_Vector("solution", f_val.size(), f_val.data());
     }
   }
   return SUCCESS;
 }
 
 #endif
+
