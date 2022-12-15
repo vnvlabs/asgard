@@ -1,5 +1,5 @@
 ARG FROM_IMAGE=vnv_base
-FROM ${FROM_IMAGE}:latest
+FROM ${FROM_IMAGE}
 
 
 # Label it 

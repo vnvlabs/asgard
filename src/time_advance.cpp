@@ -71,7 +71,7 @@ adaptive_advance(method const step_method, PDE<P> &pde,
   }
 
 
-  INJECTION_LOOP_BEGIN(ASGARD, VASGARD, AdaptiveAdvance, pde, adaptive_grid);
+  INJECTION_LOOP_BEGIN(ASGARD, VASGARD, AdaptiveAdvance, VNV_NOCALLBACK, pde, adaptive_grid);
 
   // coarsen
   auto const old_size = adaptive_grid.size();
@@ -79,13 +79,13 @@ adaptive_advance(method const step_method, PDE<P> &pde,
   node_out() << " adapt -- coarsened grid from " << old_size << " -> "
              << adaptive_grid.size() << " elems\n";
 
-  INJECTION_LOOP_ITER(ASGARD, AdaptiveAdvance, Coarsening Finished);
+  INJECTION_LOOP_ITER(ASGARD, AdaptiveAdvance, "Coarsening Finished",VNV_NOCALLBACK);
 
   // refine
   auto refining = true;
   while (refining)
   {
-    INJECTION_LOOP_ITER(ASGARD, AdaptiveAdvance, Refining);
+    INJECTION_LOOP_ITER(ASGARD, AdaptiveAdvance, "Refining",VNV_NOCALLBACK);
 
     // update boundary conditions
     auto const my_subgrid     = adaptive_grid.get_subgrid(get_rank());
@@ -124,7 +124,7 @@ adaptive_advance(method const step_method, PDE<P> &pde,
     }
   }
 
-  INJECTION_LOOP_END(ASGARD, AdaptiveAdvance);
+  INJECTION_LOOP_END(ASGARD, AdaptiveAdvance,VNV_NOCALLBACK);
   return y;
 }
 

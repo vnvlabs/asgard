@@ -41,9 +41,9 @@ INJECTION_TEST(ASGARD, PlotCoordinates)
     
     elements::table table(opts, *pde);
 
-    Solution<prec> *s = new Solution<prec>();
-    s->init_plotting(*pde, table);
-    s->put_to_vnv(*pde);
+    //Solution<prec> *s = new Solution<prec>();
+    //s->init_plotting(*pde, table);
+    //s->put_to_vnv(*pde);
     //nodes is a std::vector<prec>(degree*pow(2,level)=mat_dims)
     //std::vector<std::vector<prec>> nodes = s->nodes_;
     //std::vector<std::vector<prec>> elem_coords = s->elem_coords_;

@@ -206,7 +206,7 @@ INJECTION_TEST(ASGARD, PlotSolution)
   if (type == VnV::InjectionPointType::Begin) {}
   else if (type == VnV::InjectionPointType::Iter)
   {
-    engine->Put("time", time); // Add the time value to the time vector;
+   engine->Put("time", time); // Add the time value to the time vector;
 
     // Does fk::vector gauarantee contiguous storage? -- I guess we will find out.
     // This adds a new "vector" to the solution vector. After "X" timesteps we have
@@ -231,7 +231,7 @@ INJECTION_TEST(ASGARD, PlotSolution)
       std::vector<prec> nodes = s->generate_nodes(
           dim.get_degree(), dim.get_level(), dim.domain_min, dim.domain_max);
 
-      engine->Put_Vector("nodes", nodes.size(), nodes.data());
+     engine->Put_Vector("nodes", nodes.size(), nodes.data());
 
       // TODO: check if VnV supports plotly annotations? See below for attempt
       // at adding subplot titles:
@@ -269,8 +269,8 @@ INJECTION_TEST(ASGARD, PlotSolution)
       // TODO: this duplicates the solution but passes as a matrix to make the
       // contour plots. using the "vector" form does not seem to make the same
       // plot
-      engine->Put_Matrix("solution_mat", sizes[0], sizes[1], real_space.data(), sizes[1]);   
-      engine->Put_Vector("solution", sizes[0]*sizes[1], real_space.data());
+     engine->Put_Matrix("solution_mat", sizes[0], sizes[1], real_space.data(), sizes[1]);   
+     engine->Put_Vector("solution", sizes[0]*sizes[1], real_space.data());
      
       // for plotting 1d slices
       // TODO: should this reuse the above solution without saving more data to
@@ -287,12 +287,12 @@ INJECTION_TEST(ASGARD, PlotSolution)
        auto row_slice = mat.extract_submatrix(row, 0, 1, mat.ncols());
        auto col_slice = mat.extract_submatrix(0, col, mat.nrows(), 1);
 
-       engine->Put_Vector("row", row_slice.size(), row_slice.data());
-       engine->Put_Vector("col", col_slice.size(), col_slice.data());
+      engine->Put_Vector("row", row_slice.size(), row_slice.data());
+      engine->Put_Vector("col", col_slice.size(), col_slice.data());
     }
     else
     {
-      engine->Put_Vector("solution", f_val.size(), f_val.data());
+     engine->Put_Vector("solution", f_val.size(), f_val.data());
     }
   }
   return SUCCESS;

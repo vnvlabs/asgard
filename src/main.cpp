@@ -201,32 +201,31 @@ int main(int argc, char **argv)
    *
    * 
    */
-  INJECTION_LOOP_BEGIN_C(ASGARD, VASGARD, Configuration, IPCALLBACK {
-        if (type == VnV::InjectionPointType::Begin)
-        {
+  INJECTION_LOOP_BEGIN(ASGARD, VASGARD, Configuration, VNV_CALLBACK {
+ 
           VnV::MetaData d;
           d["table"] = "build";
-          engine->Put("Commit Branch", GIT_BRANCH, d);
-          engine->Put("Commit Summary", GIT_COMMIT_SUMMARY, d);
-          engine->Put("Commit Hash", GIT_COMMIT_HASH, d);
-          engine->Put("Build Time", BUILD_TIME, d);
+         data.engine->Put("Commit Branch", GIT_BRANCH, d);
+         data.engine->Put("Commit Summary", GIT_COMMIT_SUMMARY, d);
+         data.engine->Put("Commit Hash", GIT_COMMIT_HASH, d);
+         data.engine->Put("Build Time", BUILD_TIME, d);
 
           d["table"] = "run";
-          engine->Put("PDE", cli_input.get_pde_string(), d);
-          engine->Put("Time Steps: ", opts.num_time_steps, d);
-          engine->Put("Write freq: ", opts.wavelet_output_freq, d);
-          engine->Put("Realspace freq: ", opts.realspace_output_freq, d);
-          engine->Put("Implicit Stepper: ", opts.use_implicit_stepping, d);
-          engine->Put("Full grid: ", opts.use_full_grid, d);
-          engine->Put("CFL number: ", cli_input.get_cfl(), d);
-          engine->Put("Poisson solve: ", opts.do_poisson_solve, d);
-          engine->Put("Maximum adaptivity levels: ", opts.max_level, d);
-        }
+         data.engine->Put("PDE", cli_input.get_pde_string(), d);
+         data.engine->Put("Time Steps: ", opts.num_time_steps, d);
+         data.engine->Put("Write freq: ", opts.wavelet_output_freq, d);
+         data.engine->Put("Realspace freq: ", opts.realspace_output_freq, d);
+         data.engine->Put("Implicit Stepper: ", opts.use_implicit_stepping, d);
+         data.engine->Put("Full grid: ", opts.use_full_grid, d);
+         data.engine->Put("CFL number: ", cli_input.get_cfl(), d);
+         data.engine->Put("Poisson solve: ", opts.do_poisson_solve, d);
+         data.engine->Put("Maximum adaptivity levels: ", opts.max_level, d);
+        
       },
       opts, cli_input);
 
   // -- generate pde
-  INJECTION_LOOP_ITER(ASGARD, Configuration, Generate PDE);
+  INJECTION_LOOP_ITER(ASGARD, Configuration, "Generate PDE",VNV_NOCALLBACK);
   auto pde = make_PDE<prec>(cli_input);
 
   // -- set degree (constant since no p-adaptivity)
@@ -234,37 +233,37 @@ int main(int argc, char **argv)
 
   // -- create forward/reverse mapping between elements and indices,
   // -- along with a distribution plan. this is the adaptive grid.
-  INJECTION_LOOP_ITER(ASGARD, Configuration, Generate Adaptive Grid);
+  INJECTION_LOOP_ITER(ASGARD, Configuration, "Generate Adaptive Grid",VNV_NOCALLBACK);
   adapt::distributed_grid adaptive_grid(*pde, opts);
 
   // -- generate basis operator
-  INJECTION_LOOP_ITER(ASGARD, Configuration, Generate Basis Operator);
+  INJECTION_LOOP_ITER(ASGARD, Configuration, "Generate Basis Operator",VNV_NOCALLBACK);
   auto const quiet = false;
   basis::wavelet_transform<prec, resource::host> const transformer(opts, *pde, quiet);
  
   // -- generate and store the mass matrices for each dimension
-  INJECTION_LOOP_ITER(ASGARD, Configuration, Generate Mass Matrices);
+  INJECTION_LOOP_ITER(ASGARD, Configuration, "Generate Mass Matrices",VNV_NOCALLBACK);
   generate_dimension_mass_mat<prec>(*pde, transformer);
   
   // -- generate initial condition vector
-  INJECTION_LOOP_ITER(ASGARD, Configuration, Generate IC Vector);
+  INJECTION_LOOP_ITER(ASGARD, Configuration, "Generate IC Vector",VNV_NOCALLBACK);
   auto const initial_condition = adaptive_grid.get_initial_condition(*pde, transformer, opts);
   //degrees of freedom (post initial adapt)
   //adaptive_grid.size() * static_cast<uint64_t>(std::pow(degree, pde->num_dims))
 
   // -- regen mass mats after init conditions - TODO: check dims/rechaining?
-  INJECTION_LOOP_ITER(ASGARD, Configuration, Regenerate Mass Matrices);
+  INJECTION_LOOP_ITER(ASGARD, Configuration, "Regenerate Mass Matrices",VNV_NOCALLBACK);
   generate_dimension_mass_mat<prec>(*pde, transformer);
 
   // -- generate and store coefficient matrices.
-  INJECTION_LOOP_ITER(ASGARD, Configuration, Generate Coeff Matrix);
+  INJECTION_LOOP_ITER(ASGARD, Configuration, "Generate Coeff Matrix",VNV_NOCALLBACK);
   generate_all_coefficients<prec>(*pde, transformer);
 
   // this is to bail out for further profiling/development on the setup routines
   if (opts.num_time_steps < 1)
     return 0;
 
-  INJECTION_LOOP_END(ASGARD, Configuration);
+  INJECTION_LOOP_END(ASGARD, Configuration,VNV_NOCALLBACK);
 
   node_out() << "--- begin time loop staging ---" << '\n';
 
@@ -374,12 +373,11 @@ int main(int argc, char **argv)
    * routine.  
    * 
    */
-  INJECTION_LOOP_BEGIN_C(ASGARD, VASGARD, TimeStepping, IPCALLBACK {
+  INJECTION_LOOP_BEGIN(ASGARD, VASGARD, TimeStepping, VNV_CALLBACK {
 
-    if (type == VnV::InjectionPointType::Begin) {
-      engine->Put("timesteps", opts.num_time_steps);
-      engine->Put("impicit", opts.use_implicit_stepping ? "implicit" : "explicit");
-    }
+     data.engine->Put("timesteps", opts.num_time_steps);
+     data.engine->Put("impicit", opts.use_implicit_stepping ? "implicit" : "explicit");
+  
   }, adaptive_grid, pde, opts, time, f_val, transformer);
   
   for (auto i = 0; i < opts.num_time_steps; ++i)
@@ -491,10 +489,10 @@ int main(int argc, char **argv)
                         analytic_solution_realspace);
     }
 #endif
-    INJECTION_LOOP_ITER_D(ASGARD, TimeStepping, "TS " + std::to_string(i));
+    INJECTION_LOOP_ITER(ASGARD, TimeStepping, "TS " + std::to_string(i), VNV_NOCALLBACK);
     node_out() << "timestep: " << i << " complete" << '\n';
   }
-  INJECTION_LOOP_END(ASGARD, TimeStepping);
+  INJECTION_LOOP_END(ASGARD, TimeStepping,VNV_NOCALLBACK);
   node_out() << "--- simulation complete ---" << '\n';
 
   auto const segment_size = element_segment_size(*pde);
