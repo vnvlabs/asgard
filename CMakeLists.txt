@@ -551,3 +551,5 @@ if (ASGARD_BUILD_TESTS)
 else ()
   message (WARNING "warning: tests will not be built.")
 endif ()
+
+install()
