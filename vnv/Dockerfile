@@ -3,10 +3,6 @@ ARG FROM_IMAGE=vnv_base
 FROM ${FROM_IMAGE}
 
 
-# Label it 
-ARG COMMIT_HASH=unknown
-LABEL vnv.version.asgard=${COMMIT_HASH}
-
 #Install asgard directly into the software dir as they dont have a install target.
 COPY ./ ${SOFTWARE_DIR}/asgard
 
@@ -18,6 +14,6 @@ RUN cd ${SOFTWARE_DIR}/asgard \
     && make 
    
 #Add the asgard config file to the vnv list of config files.
-ENV VNV_CONFIG=${VNV_CONFIG}:${SOFTWARE_DIR}/asgard/vnv/config/vnv.__registration__
-ENV VNV_CONFIG=${VNV_CONFIG}:${SOFTWARE_DIR}/asgard/build/vnv.__registration__
+RUN echo ${SOFTWARE_DIR}/asgard/vnv/config/vnv.__registration__ >> ${HOME}/.vnv
+
 
