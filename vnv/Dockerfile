@@ -14,6 +14,6 @@ RUN cd ${SOFTWARE_DIR}/asgard \
     && make 
    
 #Add the asgard config file to the vnv list of config files.
-RUN echo ${SOFTWARE_DIR}/asgard/vnv/config/vnv.__registration__ >> ${HOME}/.vnv
+RUN python3 ${VNV_DIR}/scripts/register.py register ${SOFTWARE_DIR}/asgard/vnv/config/vnv.__registration__ 
 
 
