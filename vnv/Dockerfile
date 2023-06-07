@@ -14,6 +14,6 @@ RUN cd ${SOFTWARE_DIR}/asgard \
     && make 
    
 #Add the asgard config file to the vnv list of config files.
-ENV VNV_CONFIG=${VNV_CONFIG}:${SOFTWARE_DIR}/asgard/vnv/config/vnv.__registration__ 
+RUN ${VNV_REGISTER} gui asgard ${SOFTWARE_DIR}/asgard/vnv/config/vnv.__registration__ 
 
 
