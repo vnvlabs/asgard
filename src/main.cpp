@@ -43,29 +43,29 @@ using prec = float;
  *       "json_file": {
  *           "filename": "aout"
  *       }
- *   },
- *   "options":{
+ *      },
+ *      "options":{
  *       "ASGARD" : {
  *           "adapt" : true,
  *           "adaptive_threshold" : 0.1,
  *           "max_levels" : 8
- *       }
- *   },
- *   "injectionPoints" : {
- *       "ASGARD:Configuration" : {
- *           "tests" : {
- *               "VNV:cputime" : {}
- *           }
+ *          }
  *       },
- *       "ASGARD:TimeStepping" : {
- *           "tests" : {
- *               "ASGARD:PlotSolution" : {},
- *               "ASGARD:MeshInfo" : {},
- *               "ASGARD:PlotError" : {}
- *           }
- *       }
- *    }
- *  }
+ *       "injectionPoints" : {
+ *           "ASGARD:Configuration" : {
+ *              "tests" : {
+ *                 "VNV:cputime" : {}
+ *              }
+ *           },
+ *           "ASGARD:TimeStepping" : {
+ *               "tests" : {
+ *                 "ASGARD:PlotSolution" : {},
+ *                 "ASGARD:MeshInfo" : {},
+ *                 "ASGARD:PlotError" : {}
+ *               }
+ *            }
+ *        }
+ *     }
  * }
  * 
  * 
@@ -90,7 +90,10 @@ using prec = float;
  * implemented as batched operations.
  *
  */
-INJECTION_EXECUTABLE(ASGARD)
+INJECTION_EXECUTABLE(ASGARD,"{}") 
+
+
+
 INJECTION_SUBPACKAGE(ASGARD, ASGARD_time_advance)
 INJECTION_SUBPACKAGE(ASGARD, ASGARD_pde)
 INJECTION_SUBPACKAGE(ASGARD, ASGARD_tools)
