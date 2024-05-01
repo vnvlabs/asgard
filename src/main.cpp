@@ -40,7 +40,7 @@ using prec = float;
  * @configuration { 
  * "input" : {
  *     "outputEngine": {
- *       "json_file": {
+ *       "file": {
  *           "filename": "aout"
  *       }
  *      },
@@ -191,7 +191,7 @@ int main(int argc, char **argv)
    * .. vnv-quick-table::
    *    :names: ["Property", "Value"]
    *    :fields: ["name", "value"]
-   *    :data: *|[?_table==`build`].{ "name" : Name , "value" : Value }
+   *    :data: {{*|[?_table==`build`].{ "name" : Name , "value" : Value }}}
    *
    *
    * Application Configuration
@@ -200,7 +200,7 @@ int main(int argc, char **argv)
    * .. vnv-quick-table::
    *    :names: ["Property", "Value"]
    *    :fields: ["name", "value"]
-   *    :data: *|[?_table==`run`].{ "name" : Name , "value" : Value }
+   *    :data: {{*|[?_table==`run`].{ "name" : Name , "value" : Value }}}
    *
    * 
    */

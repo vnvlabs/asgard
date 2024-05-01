@@ -190,14 +190,14 @@ using prec = float;
 INJECTION_TEST(ASGARD, PlotSolution)
 {
   // Can't use T for type parameter in these two GetRef conversions.
-  auto &adaptive_grid = GetRef_NoCheck("adaptive_grid", adapt::distributed_grid<prec>);
-  auto &pde  = GetRef_NoCheck("pde", std::unique_ptr<PDE<prec>>);
-  auto &opts = GetRef_NoCheck("opts", options);
-  auto &time = GetRef_NoCheck("time", prec);
-  auto &f_val = GetRef_NoCheck("f_val", fk::vector<prec>);
+  auto &adaptive_grid = GetRef("adaptive_grid", adapt::distributed_grid<prec>);
+  auto &pde  = GetRef("pde", std::unique_ptr<PDE<prec>>);
+  auto &opts = GetRef("opts", options);
+  auto &time = GetRef("time", prec);
+  auto &f_val = GetRef("f_val", fk::vector<prec>);
   
-  // Bug -- GetRef_NoCheck does not support types with a "," in them :?
-  void *transformer_raw = GetPtr_NoCheck("transformer", void );
+  // Bug -- GetRef does not support types with a "," in them :?
+  void *transformer_raw = GetPtr("transformer", void );
   auto* transformer_ptr = (basis::wavelet_transform<prec, resource::host>*) transformer_raw;
   auto& transformer = *transformer_ptr;
 

@@ -27,10 +27,10 @@ using prec = float;
 INJECTION_TEST(ASGARD, PlotCoordinates)
 {
   // Can't use T for type parameter in these two GetRef conversions.
-  auto &adaptive_grid = GetRef_NoCheck("adaptive_grid", adapt::distributed_grid<prec>);
-  auto &pde  = GetRef_NoCheck("pde", std::unique_ptr<PDE<prec>>);
-  auto &time = GetRef_NoCheck("time", prec);
-  auto &opts = GetRef_NoCheck("opts", options);
+  auto &adaptive_grid = GetRef("adaptive_grid", adapt::distributed_grid<prec>);
+  auto &pde  = GetRef("pde", std::unique_ptr<PDE<prec>>);
+  auto &time = GetRef("time", prec);
+  auto &opts = GetRef("opts", options);
   
   if (type == VnV::InjectionPointType::Begin) 
   {
