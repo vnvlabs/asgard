@@ -167,7 +167,7 @@ int main(int argc, char **argv)
    * implemented as batched operations.
    * 
    */
-  INJECTION_INITIALIZE(ASGARD, &argc, &argv, "./vv-input.json");
+  INJECTION_INITIALIZE(ASGARD, &argc, &argv);
 
   options const opts(cli_input);
 

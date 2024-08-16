@@ -41,9 +41,8 @@ static distribution_handler distro_handle;
 
 #ifdef ASGARD_USE_VNV
 #ifdef ASGARD_USE_MPI
-MPI_Comm& get_comm(){
-	static MPI_Comm comm = distro_handle.get_global_comm();
-	return comm;
+MPI_Comm get_comm(){
+	returm distro_handle.get_global_comm();
 }
 #endif
 #endif

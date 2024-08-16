@@ -13,7 +13,3 @@ RUN cd ${SOFTWARE_DIR}/asgard \
     && cmake -DInjection_DIR=${VNV_DIR}/lib/cmake -DASGARD_USE_VNV=ON .. \
     && make 
    
-#Add the asgard config file to the vnv list of config files.
-RUN ${VNV_REGISTER} gui asgard ${SOFTWARE_DIR}/asgard/vnv/config/vnv.__registration__ 
-
-

@@ -170,8 +170,8 @@ bool is_active();
 #ifdef ASGARD_USE_VNV
 #ifdef ASGARD_USE_MPI
 
-#define VASGARD VCUST("mpi",get_comm())
-MPI_Comm& get_comm();
+#define VASGARD VCUST(get_comm())
+MPI_Comm get_comm();
 #else 
 #define VASGARD VSELF
 #endif

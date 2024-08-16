@@ -417,7 +417,7 @@ if (ASGARD_USE_VNV)
 
   find_package(Injection)
   add_subdirectory(src/VnV)
-  link_vnv_file(asgard ASGARD cpp)
+  link_vnv_executable(asgard ASGARD cpp)
 
   foreach(package ${main_app_link_deps})
 	link_vnv_file(${package} ASGARD_${package} cpp)
